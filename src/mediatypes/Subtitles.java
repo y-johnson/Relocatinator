@@ -1,6 +1,6 @@
 package mediatypes;
 
-import filesystem.PathFinder;
+import yjohnson.PathFinder;
 import general.Main;
 import yjohnson.ConsoleEvent;
 

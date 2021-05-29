@@ -1,7 +1,7 @@
 package mediatypes;
 
-import filesystem.PathFinder;
-import general.Handbrake;
+import yjohnson.PathFinder;
+import general.Main;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,8 +97,8 @@ public class TV extends Media {
 
 
         // Remove extension from filename
-        if (filename.endsWith(Handbrake.sourceFileExt)) {
-            filename = filename.substring(0,filename.lastIndexOf(Handbrake.sourceFileExt));
+        if (filename.endsWith(Main.sourceExtension)) {
+            filename = filename.substring(0,filename.lastIndexOf(Main.sourceExtension));
         }
 
         // Remove underscores, dots, or other possible "space characters" from filename
@@ -160,7 +160,7 @@ public class TV extends Media {
             metadata[1] = metadata[1].substring(0,metadata[1].indexOf(episodeIndicator)).trim();
         }
 
-        metadata[5] = PathFinder.tvFolders(Handbrake.destinationFolder, metadata[6], metadata[2], metadata[1]).trim();
+        metadata[5] = PathFinder.tvFolders(Main.destinationFolder.toString(), metadata[6], metadata[2], metadata[1]).trim();
 
         return metadata;
     }

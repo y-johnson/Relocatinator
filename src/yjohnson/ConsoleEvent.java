@@ -122,7 +122,7 @@ public class ConsoleEvent {
         } while (userInput <= 0 || userInput > options.size());
 
         /* Not valid option, never reached */
-        return 0;
+        return -1;
     }
 
     /**

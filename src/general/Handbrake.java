@@ -1,6 +1,6 @@
 package general;
 
-import filesystem.PathFinder;
+import yjohnson.PathFinder;
 import mediatypes.Media;
 import mediatypes.Movie;
 import mediatypes.Subtitles;

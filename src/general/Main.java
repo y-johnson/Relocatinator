@@ -19,7 +19,6 @@ public class Main {
     public static File sourceFolder, destinationFolder, handbrakeLocation;
     public static String sourceExtension, destinationExtension;
 
-
     static {
         APP_NAME = "Relocatinator";
         VERSION = "0.2";
@@ -27,47 +26,49 @@ public class Main {
         CURR_DATE = new Date();
     }
 
-    /**
-     * Main program setup.
-     */
     private static void setup() {
         /* Intro for user */
         StringBuilder sb = new StringBuilder();
         sb.append('-').append(APP_NAME.toUpperCase()).append(" v").append(VERSION).append('-').append("\n");
         ConsoleEvent.print(sb.toString());
 
-        /* Ask user if they want to see all events or just the ones that concern them; everything will be logged regardless. */
-        sb = new StringBuilder();
-        sb.append(APP_NAME).append(" will generate a log file called \"log.txt\" in the program's current operating directory.\n");
         ConsoleEvent.setShowUserAllEvents(ConsoleEvent.askUserForBoolean("Show debug text?"));
+
+        // Clears the string efficiently. https://stackoverflow.com/questions/5192512/how-can-i-clear-or-empty-a-stringbuilder
+        sb.setLength(0);
+        sb.append(APP_NAME).append(" will generate a log file called \"log.txt\" in the program's current operating directory.\n");
         ConsoleEvent.print(sb.toString());
 
-        boolean correct = false;
-        /* Input all relevant directories */
-        // HandBrake
-        do {
-            File h;
-            do  {
-                h = new File(ConsoleEvent.askUserForString("Location for HandBrake (CLI version): "));
-            } while (!h.exists() || !Handbrake.isPresent(h));
-            handbrakeLocation = h;
+        /* TODO
+        The following code-block can (and should) be extracted to facilitate abstraction. Because it is dedicated to
+        HandBrake, making it a method of the HandBrake class would be best.
+         */
+        {
+            boolean correct = false;
+            do {
+                File h;
+                do {
+                    h = new File(ConsoleEvent.askUserForString("Location for HandBrake (CLI version): "));
+                } while (!h.exists() || !Handbrake.isPresent(h));
+                handbrakeLocation = h;
 
-            sb = new StringBuilder();
-            sb.append("HandBrake location: ").append(handbrakeLocation).append("\n");
-            ConsoleEvent.print(sb.toString());
+                sb = new StringBuilder();
+                sb.append("\nHandBrake location: ").append(handbrakeLocation.getAbsolutePath()).append("\n");
+                ConsoleEvent.print(sb.toString());
 
-            correct = ConsoleEvent.askUserForBoolean("Confirm?");
-        } while (!correct);
-
-        /* Verifies that a file named HandbrakeCLI.exe is present in the root folder */
+                correct = ConsoleEvent.askUserForBoolean("Confirm?");
+            } while (!correct);
+        }
 
         SimpleDateFormat formatter = new SimpleDateFormat(" [dd-MM-yyyy][HH-mm-ss]");
         MediaHistory.setup("History" + formatter.format(CURR_DATE) + ".txt");
 
         MediaQueue.createMediaQueue();
 
-        Handbrake.setAdditionalArgs();
-
+        // TODO Same as above
+        {
+            Handbrake.setAdditionalArgs();
+        }
     }
 
 
