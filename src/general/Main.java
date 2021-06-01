@@ -16,6 +16,7 @@ public class Main {
     public static Date CURR_DATE;
 
     // Paths to the source and destination folders
+    private static MediaQueue queue;
     public static File sourceFolder, destinationFolder, handbrakeLocation;
     public static String sourceExtension, destinationExtension;
 
@@ -43,32 +44,33 @@ public class Main {
         The following code-block can (and should) be extracted to facilitate abstraction. Because it is dedicated to
         HandBrake, making it a method of the HandBrake class would be best.
          */
-        {
-            boolean correct = false;
-            do {
-                File h;
-                do {
-                    h = new File(ConsoleEvent.askUserForString("Location for HandBrake (CLI version): "));
-                } while (!h.exists() || !Handbrake.isPresent(h));
-                handbrakeLocation = h;
-
-                sb = new StringBuilder();
-                sb.append("\nHandBrake location: ").append(handbrakeLocation.getAbsolutePath()).append("\n");
-                ConsoleEvent.print(sb.toString());
-
-                correct = ConsoleEvent.askUserForBoolean("Confirm?");
-            } while (!correct);
-        }
+//        {
+//            boolean correct = false;
+//            do {
+//                File h;
+//                do {
+//                    h = new File(ConsoleEvent.askUserForString("Location for HandBrake (CLI version): "));
+//                } while (!h.exists() || !Handbrake.isPresent(h));
+//                handbrakeLocation = h;
+//
+//                sb = new StringBuilder();
+//                sb.append("\nHandBrake location: ").append(handbrakeLocation.getAbsolutePath()).append("\n");
+//                ConsoleEvent.print(sb.toString());
+//
+//                correct = ConsoleEvent.askUserForBoolean("Confirm?");
+//            } while (!correct);
+//        }
 
         SimpleDateFormat formatter = new SimpleDateFormat(" [dd-MM-yyyy][HH-mm-ss]");
         MediaHistory.setup("History" + formatter.format(CURR_DATE) + ".txt");
 
-        MediaQueue.createMediaQueue();
+        queue = new MediaQueue();
+        queue.createMediaQueue();
 
-        // TODO Same as above
-        {
-            Handbrake.setAdditionalArgs();
-        }
+//        // TODO Same as above
+//        {
+//            Handbrake.setAdditionalArgs();
+//        }
     }
 
 
