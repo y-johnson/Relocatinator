@@ -103,7 +103,7 @@ public class TV extends Media {
 
         // Remove underscores, dots, or other possible "space characters" from filename
         for (String e : unwantedSpaces) {
-            if (filename.contains(e)) filename = filename.replaceAll(e," ").trim();
+            if (filename.contains(e)) filename = filename.replace(e," ").trim();
         }
 
         // Extract release group from filename
