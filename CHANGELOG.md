@@ -1,24 +1,63 @@
 # Changelog
 
+### 6/2/2021 17:51
+
+#### Reimplementation of ```TV.java```
+
+* The ```Media``` and ```TV``` classes have been remade to support the new queue system.
+	* They only depend on their parent class, ```File```.
+
+* ```TV``` object creation has been heavily streamlined.
+	* ```TV``` objects are still capable of extracting information from their filename.
+		* This has been improved to support a wider variety of indicators.
+	* ```String[] metadata``` has been removed as it does not provide any innate advantage over individual variables and
+	  reduces clarity.
+
+#### General	  
+* ```Subtitles.java``` and ```MediaHistory.java``` have been removed.
+	* They provide functionality which could be of great use later on, but their implementation must be refined alongside 
+	the program. Because they are not essential, they have been removed to simplify the core aspects of the program.
+	  
+* ```MediaQueue``` and ```MediaList``` now implement ```Iterable```.
+	* They only call upon their underlying data structure's iterator, however. This functionality is sufficient right now.
+
+#### Priorities
+
+1. Fix all ```Media``` subtypes.
+	* Their implementation should be completely detached from the rest of the program.
+
+	* ```Media``` should not output anything to the command line nor should it have to worry about global variables
+	  in ```Main```.
+		* Using ```MediaList``` as the holster for metadata which ```Media``` would want in the future is an option.
+
+2. Fix metadata logic for ```Media``` subtypes.
+
+3. Ensure program can do basic operations such as batch rename and move.
+
+4. Allow for more granular user input.
+
 ### 6/1/2021 20:02
 
 #### Even more major changes to ```MediaQueue.java```
-* Finished the refactor for the queue system. 
-  * It can, theoretically, queue up various lists of ```Media``` subtypes, and said lists possess the source directory of
-	the files, their extension, and their (collective) destination.
-	* This means that it would be possible to queue up different lists of files that go to different destinations and have
-	  their own extensions.
-  * It has been ported to a non-static implementation to allow for multiple instantiations.
-  * It still has room for improvement as development progresses, but the core of it does not need to be changed for now.
-	
+
+* Finished the refactor for the queue system.
+	* It can, theoretically, queue up various lists of ```Media``` subtypes, and said lists possess the source directory
+	  of the files, their extension, and their (collective) destination.
+		* This means that it would be possible to queue up different lists of files that go to different destinations
+		  and have their own extensions.
+	* It has been ported to a non-static implementation to allow for multiple instantiations.
+	* It still has room for improvement as development progresses, but the core of it does not need to be changed for
+	  now.
+
 #### General
+
 * Multiple files have had minor additions and changes to improve functionality.
 
 #### Priorities
 
 1. Fix all ```Media``` subtypes.
 	* Their implementation should be completely detached from the rest of the program.
-	
+
 	* ```Media``` should not output anything to the command line nor should it have to worry about global variables
 	  in ```Main```.
 		* Using ```MediaList``` as the holster for metadata which ```Media``` would want in the future is an option.
@@ -36,6 +75,7 @@
 >* Add JavaDocs for all methods.
 
 Note: HandBrake functionality has been commented out for debugging purposes.
+
 ### 6/1/2021 15:03
 
 #### Major changes to ```MediaQueue.java```.

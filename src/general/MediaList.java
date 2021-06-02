@@ -1,62 +1,89 @@
 package general;
 
-import mediatypes.GenericVideo;
 import mediatypes.Media;
-import mediatypes.Movie;
+import mediatypes.MediaTypes;
 import mediatypes.TV;
 import yjohnson.ConsoleEvent;
 import yjohnson.PathFinder;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 
-public class MediaList {
-    private Path dir;
-    private String ext;
-    private LinkedList<Media> mediaList;
+public class MediaList implements Iterable<Media> {
+	private String name;
+	private Path dir;
+	private String ext;
+	private LinkedList<Media> mediaList;
 
-    public Path getDirectory() {
-        return dir;
-    }
+	public MediaList (Path dir, String ext, MediaTypes type) {
+		this.mediaList = new LinkedList<>();
+		this.dir = dir;
+		this.ext = ext;
+		HashMap<String, Integer> listNames = new HashMap();
 
-    public String getExtension() {
-        return ext;
-    }
+		for (File f : PathFinder.findFiles(dir.toFile(), ext)) {
+			ConsoleEvent.print(
+					"Adding " + f.getName() + " to the list as a " + type.name() + ".",
+					ConsoleEvent.logStatus.DETAIL
+			);
+			switch (type) {
+				case TV:
+					mediaList.add(new TV(f.getAbsolutePath()));
+					break;
+				case MOVIE:
+//                        mediaList.add(new Movie(f.getAbsolutePath()));
+					break;
+				case GENERIC:
+//                        mediaList.add(new GenericVideo(f.getAbsolutePath()));
+					break;
+			}
+		}
 
-    public MediaList(Path dir, String ext, Media.type type) {
-        this.mediaList = new LinkedList<>();
-        this.dir = dir;
-        this.ext = ext;
+		for (Media m : this.mediaList) {
+			if (m.getClass() == TV.class) {
+				if (!listNames.containsKey(((TV) m).getSeriesName())) {
+					listNames.put(((TV) m).getSeriesName(), 1);
+				} else {
+					listNames.replace(((TV) m).getSeriesName(), listNames.get(((TV) m).getSeriesName()) + 1);
+				}
+			}
+		}
 
-        for (File f : PathFinder.findFiles(dir.toFile(), ext)) {
-            ConsoleEvent.print(
-                    "Adding " + f.getName() + " to the list as a " + type.name() + ".",
-                    ConsoleEvent.logStatus.DETAIL
-            );
-            try {
-                switch (type) {
-                    case TV:
-                        mediaList.add(new TV(f.getAbsolutePath()));
-                        break;
-                    case MOVIE:
-                        mediaList.add(new Movie(f.getAbsolutePath()));
-                        break;
-                    case GENERIC:
-                        mediaList.add(new GenericVideo(f.getAbsolutePath()));
-                        break;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+		int largest = -1;
+		for (String key : listNames.keySet()) {
+			if (listNames.get(key) > largest) {
+				largest = listNames.get(key);
+				this.name = key;
+			}
+		}
+	}
 
-    public boolean isEmpty() {
-        return mediaList.isEmpty();
-    }
-    public int size() {
-        return mediaList.size();
-    }
+	@Override
+	public String toString () {
+		return this.name;
+	}
+
+	public Path getDirectory () {
+		return dir;
+	}
+
+	public String getExtension () {
+		return ext;
+	}
+
+	public boolean isEmpty () {
+		return mediaList.isEmpty();
+	}
+
+	public int size () {
+		return mediaList.size();
+	}
+
+	@Override
+	public Iterator<Media> iterator () {
+		return this.mediaList.iterator();
+	}
 }

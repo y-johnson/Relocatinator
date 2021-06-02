@@ -1,7 +1,5 @@
 package general;
 
-import mediatypes.Media;
-import mediatypes.MediaHistory;
 import yjohnson.ConsoleEvent;
 
 import java.io.File;
@@ -14,11 +12,7 @@ public class Main {
 	public static String VERSION;
 	public static File PROGRAM_DIR;
 	public static Date CURR_DATE;
-
-	// Paths to the source and destination folders
 	private static MediaQueue queue;
-	public static File sourceFolder, destinationFolder, handbrakeLocation;
-	public static String sourceExtension, destinationExtension;
 
 	static {
 		APP_NAME = "Relocatinator";
@@ -27,7 +21,7 @@ public class Main {
 		CURR_DATE = new Date();
 	}
 
-	private static void setup() {
+	private static void setup () {
 		/* Intro for user */
 		StringBuilder sb = new StringBuilder();
 		sb.append('-').append(APP_NAME.toUpperCase()).append(" v").append(VERSION).append('-').append("\n");
@@ -62,35 +56,20 @@ public class Main {
 //        }
 
 		SimpleDateFormat formatter = new SimpleDateFormat(" [dd-MM-yyyy][HH-mm-ss]");
-		MediaHistory.setup("History" + formatter.format(CURR_DATE) + ".txt");
 
 		queue = new MediaQueue();
-//        queue.createMediaQueue();
 
-//        // TODO Same as above
-//        {
-//            Handbrake.setAdditionalArgs();
-//        }
 	}
 
 
-	public static void main(String[] args) {
+	public static void main (String[] args) {
 
 		setup();
 
-		// Capable of having multiple media types
-//        for (Media file : MediaQueue.getMediaQueue()) {
-//            Handbrake.processMediaFile(file);
-//        }
-
 		String overview = "Overview of Completed Operations: \n";
 		StringBuilder sb = new StringBuilder();
-
 		sb.append(overview);
-//        for (MediaList m : ) {
-//            sb.append("\n" + m.getName() + ": " + m.getCurrentStatus());
-//            sb.append("\n     Time Elapsed: " + m.getTimeElapsedWhileProcessing().toString() + "\n");
-//        }
+		sb.append(queue.stringOfContents());
 
 		ConsoleEvent.print(sb.toString());
 	}

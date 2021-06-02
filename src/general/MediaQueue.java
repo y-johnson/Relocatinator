@@ -1,13 +1,15 @@
 package general;
 
 import mediatypes.Media;
+import mediatypes.MediaTypes;
 import yjohnson.ConsoleEvent;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
-public class MediaQueue {
+public class MediaQueue implements Iterable{
 	private final LinkedList<MediaList> queue;
 
 	public MediaQueue () {
@@ -47,14 +49,25 @@ public class MediaQueue {
 	 * @param dir directory to be presented to the user.
 	 * @return the type of Media the user selected.
 	 */
-	private static Media.type askUserForMediaType (String dir) {
+	private static MediaTypes askUserForMediaType (String dir) {
 		ArrayList<String> typeList = new ArrayList<>();
-		for (Media.type e : Media.type.values()) {
+		for (MediaTypes e : MediaTypes.values()) {
 			typeList.add(e.toString());
 		}
-		Media.type value = Media.type.values()[ConsoleEvent.askUserForOption("\nSelect the media type for files in " + dir, typeList) - 1];
+		MediaTypes value = MediaTypes.values()[ConsoleEvent.askUserForOption("\nSelect the media type for files in " + dir, typeList) - 1];
 		ConsoleEvent.print("Media type of current operation: " + value, ConsoleEvent.logStatus.NOTICE);
 		return value;
+	}
+
+	public String stringOfContents() {
+		StringBuilder sb = new StringBuilder();
+		for (MediaList m : queue) {
+			sb.append(m.toString()).append("\n");
+			for (Media item : m) {
+			    sb.append("-").append(item.getCustomName()).append("\n");
+			}
+		}
+		return sb.toString();
 	}
 
 	public int size () {
@@ -63,5 +76,10 @@ public class MediaQueue {
 			size += l.size();
 		}
 		return size;
+	}
+
+	@Override
+	public Iterator<MediaList> iterator () {
+		return queue.iterator();
 	}
 }
