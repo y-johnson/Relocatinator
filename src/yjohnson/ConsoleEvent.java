@@ -6,12 +6,8 @@ import java.util.Scanner;
 import java.util.logging.Logger;
 
 public class ConsoleEvent {
-
-	// LOGGING
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	private static final Logger consoleLog = Logger.getLogger(ConsoleEvent.class.getName());
 	private static final String INVALID_RESPONSE = "Invalid response. Try again.";
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	private static final String SEPARATOR = " / ";
 	private static final String ESCAPE_LOOP_KEYWORD = "-DONE-";
 	private final static String YES_OR_NO = " [y/n]: ";
