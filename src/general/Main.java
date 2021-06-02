@@ -10,35 +10,35 @@ import java.util.Date;
 
 public class Main {
 
-    public static String APP_NAME;
-    public static String VERSION;
-    public static File PROGRAM_DIR;
-    public static Date CURR_DATE;
+	public static String APP_NAME;
+	public static String VERSION;
+	public static File PROGRAM_DIR;
+	public static Date CURR_DATE;
 
-    // Paths to the source and destination folders
-    private static MediaQueue queue;
-    public static File sourceFolder, destinationFolder, handbrakeLocation;
-    public static String sourceExtension, destinationExtension;
+	// Paths to the source and destination folders
+	private static MediaQueue queue;
+	public static File sourceFolder, destinationFolder, handbrakeLocation;
+	public static String sourceExtension, destinationExtension;
 
-    static {
-        APP_NAME = "Relocatinator";
-        VERSION = "0.2";
-        PROGRAM_DIR = new File(System.getProperty("user.dir"));
-        CURR_DATE = new Date();
-    }
+	static {
+		APP_NAME = "Relocatinator";
+		VERSION = "0.2";
+		PROGRAM_DIR = new File(System.getProperty("user.dir"));
+		CURR_DATE = new Date();
+	}
 
-    private static void setup() {
-        /* Intro for user */
-        StringBuilder sb = new StringBuilder();
-        sb.append('-').append(APP_NAME.toUpperCase()).append(" v").append(VERSION).append('-').append("\n");
-        ConsoleEvent.print(sb.toString());
+	private static void setup() {
+		/* Intro for user */
+		StringBuilder sb = new StringBuilder();
+		sb.append('-').append(APP_NAME.toUpperCase()).append(" v").append(VERSION).append('-').append("\n");
+		ConsoleEvent.print(sb.toString());
 
-        ConsoleEvent.setShowUserAllEvents(ConsoleEvent.askUserForBoolean("Show debug text?"));
+		ConsoleEvent.setShowUserAllEvents(ConsoleEvent.askUserForBoolean("Show debug text?"));
 
-        // Clears the string efficiently. https://stackoverflow.com/questions/5192512/how-can-i-clear-or-empty-a-stringbuilder
-        sb.setLength(0);
-        sb.append(APP_NAME).append(" will generate a log file called \"log.txt\" in the program's current operating directory.\n");
-        ConsoleEvent.print(sb.toString());
+		// Clears the string efficiently. https://stackoverflow.com/questions/5192512/how-can-i-clear-or-empty-a-stringbuilder
+		sb.setLength(0);
+		sb.append(APP_NAME).append(" will generate a log file called \"log.txt\" in the program's current operating directory.\n");
+		ConsoleEvent.print(sb.toString());
 
         /* TODO
         The following code-block can (and should) be extracted to facilitate abstraction. Because it is dedicated to
@@ -61,39 +61,39 @@ public class Main {
 //            } while (!correct);
 //        }
 
-        SimpleDateFormat formatter = new SimpleDateFormat(" [dd-MM-yyyy][HH-mm-ss]");
-        MediaHistory.setup("History" + formatter.format(CURR_DATE) + ".txt");
+		SimpleDateFormat formatter = new SimpleDateFormat(" [dd-MM-yyyy][HH-mm-ss]");
+		MediaHistory.setup("History" + formatter.format(CURR_DATE) + ".txt");
 
-        queue = new MediaQueue();
-        queue.createMediaQueue();
+		queue = new MediaQueue();
+//        queue.createMediaQueue();
 
 //        // TODO Same as above
 //        {
 //            Handbrake.setAdditionalArgs();
 //        }
-    }
+	}
 
 
-    public static void main(String[] args) {
+	public static void main(String[] args) {
 
-        setup();
+		setup();
 
-        // Capable of having multiple media types
-        for (Media file : MediaQueue.getMediaQueue()) {
-            Handbrake.processMediaFile(file);
-        }
+		// Capable of having multiple media types
+//        for (Media file : MediaQueue.getMediaQueue()) {
+//            Handbrake.processMediaFile(file);
+//        }
 
-        String overview = "Overview of Completed Operations: \n";
-        StringBuilder sb = new StringBuilder();
+		String overview = "Overview of Completed Operations: \n";
+		StringBuilder sb = new StringBuilder();
 
-        sb.append(overview);
-        for (Media m : MediaQueue.getMediaQueue()) {
-            sb.append("\n" + m.getName() + ": " + m.getCurrentStatus());
-            sb.append("\n     Time Elapsed: " + m.getTimeElapsedWhileProcessing().toString() + "\n");
-        }
+		sb.append(overview);
+//        for (MediaList m : ) {
+//            sb.append("\n" + m.getName() + ": " + m.getCurrentStatus());
+//            sb.append("\n     Time Elapsed: " + m.getTimeElapsedWhileProcessing().toString() + "\n");
+//        }
 
-        ConsoleEvent.print(sb.toString());
-    }
+		ConsoleEvent.print(sb.toString());
+	}
 
 
 }

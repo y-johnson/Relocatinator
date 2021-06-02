@@ -1,5 +1,41 @@
 # Changelog
 
+### 6/1/2021 20:02
+
+#### Even more major changes to ```MediaQueue.java```
+* Finished the refactor for the queue system. 
+  * It can, theoretically, queue up various lists of ```Media``` subtypes, and said lists possess the source directory of
+	the files, their extension, and their (collective) destination.
+	* This means that it would be possible to queue up different lists of files that go to different destinations and have
+	  their own extensions.
+  * It has been ported to a non-static implementation to allow for multiple instantiations.
+  * It still has room for improvement as development progresses, but the core of it does not need to be changed for now.
+	
+#### General
+* Multiple files have had minor additions and changes to improve functionality.
+
+#### Priorities
+
+1. Fix all ```Media``` subtypes.
+	* Their implementation should be completely detached from the rest of the program.
+	
+	* ```Media``` should not output anything to the command line nor should it have to worry about global variables
+	  in ```Main```.
+		* Using ```MediaList``` as the holster for metadata which ```Media``` would want in the future is an option.
+
+2. Fix metadata logic for ```Media``` subtypes.
+
+3. Ensure program can do basic operations such as batch rename and move.
+
+4. Allow for more granular user input.
+
+> #### To-Do
+>* Work towards fully removing the dependency on legacy HandBrake compatibility code to extend program utility and
+   > versatility.
+>* Refactor most of the program logic to make it more structured and clean.
+>* Add JavaDocs for all methods.
+
+Note: HandBrake functionality has been commented out for debugging purposes.
 ### 6/1/2021 15:03
 
 #### Major changes to ```MediaQueue.java```.

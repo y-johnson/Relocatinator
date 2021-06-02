@@ -17,6 +17,14 @@ public class MediaList {
     private String ext;
     private LinkedList<Media> mediaList;
 
+    public Path getDirectory() {
+        return dir;
+    }
+
+    public String getExtension() {
+        return ext;
+    }
+
     public MediaList(Path dir, String ext, Media.type type) {
         this.mediaList = new LinkedList<>();
         this.dir = dir;
