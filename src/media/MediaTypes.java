@@ -1,6 +1,6 @@
-package mediatypes;
+package media;
 
 /**
  * The three media types to assign to all subclasses of Media.
  */
-public enum MediaTypes {TV, MOVIE, GENERIC}
+public enum MediaTypes {TV, MOVIE}

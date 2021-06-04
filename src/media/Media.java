@@ -1,4 +1,4 @@
-package mediatypes;
+package media;
 
 import java.io.File;
 

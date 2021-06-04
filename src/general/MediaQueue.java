@@ -1,7 +1,7 @@
 package general;
 
-import mediatypes.Media;
-import mediatypes.MediaTypes;
+import media.Media;
+import media.MediaTypes;
 import yjohnson.ConsoleEvent;
 
 import java.io.File;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class MediaQueue implements Iterable{
+public class MediaQueue implements Iterable<MediaList> {
 	private final LinkedList<MediaList> queue;
 
 	public MediaQueue () {
@@ -59,12 +59,12 @@ public class MediaQueue implements Iterable{
 		return value;
 	}
 
-	public String stringOfContents() {
+	public String stringOfContents () {
 		StringBuilder sb = new StringBuilder();
 		for (MediaList m : queue) {
 			sb.append(m.toString()).append("\n");
 			for (Media item : m) {
-			    sb.append("-").append(item.getCustomName()).append("\n");
+				sb.append("-").append(item.getCustomName()).append("\n");
 			}
 		}
 		return sb.toString();

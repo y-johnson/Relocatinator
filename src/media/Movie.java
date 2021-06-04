@@ -1,10 +1,10 @@
-package mediatypes;
+package media;
 
 import java.util.Calendar;
 import java.util.LinkedList;
 
-import static mediatypes.MetadataOps.unwantedBrackets;
-import static mediatypes.MetadataOps.unwantedSpaces;
+import static media.MetadataOps.unwantedBrackets;
+import static media.MetadataOps.unwantedSpaces;
 
 public class Movie extends Media {
 	private static final int MOVIE_EARLIEST_YEAR = 1900;

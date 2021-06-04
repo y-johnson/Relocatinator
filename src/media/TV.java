@@ -1,10 +1,10 @@
-package mediatypes;
+package media;
 
 import java.io.File;
 import java.io.IOException;
 
-import static mediatypes.MetadataOps.unwantedBrackets;
-import static mediatypes.MetadataOps.unwantedSpaces;
+import static media.MetadataOps.unwantedBrackets;
+import static media.MetadataOps.unwantedSpaces;
 
 public class TV extends Media {
 
@@ -28,7 +28,6 @@ public class TV extends Media {
 	 * metadata storage and references to other files.
 	 *
 	 * @param pathname the path to the Media file
-	 * @throws IOException when specified file is not found
 	 */
 	public TV (String pathname) {
 		super(pathname, MediaTypes.TV);

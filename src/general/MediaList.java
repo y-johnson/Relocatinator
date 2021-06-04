@@ -1,9 +1,9 @@
 package general;
 
-import mediatypes.Media;
-import mediatypes.MediaTypes;
-import mediatypes.Movie;
-import mediatypes.TV;
+import media.Media;
+import media.MediaTypes;
+import media.Movie;
+import media.TV;
 import yjohnson.ConsoleEvent;
 import yjohnson.PathFinder;
 
@@ -17,13 +17,13 @@ public class MediaList implements Iterable<Media> {
 	private String name;
 	private Path dir;
 	private String ext;
-	private LinkedList<Media> mediaList;
+	private final LinkedList<Media> mediaList;
 
 	public MediaList (Path dir, String ext, MediaTypes type) {
 		this.mediaList = new LinkedList<>();
 		this.dir = dir;
 		this.ext = ext;
-		HashMap<String, Integer> listNames = new HashMap();
+		HashMap<String, Integer> listNames = new HashMap<>();
 
 		for (File f : PathFinder.findFiles(dir.toFile(), ext)) {
 			ConsoleEvent.print(
@@ -35,11 +35,10 @@ public class MediaList implements Iterable<Media> {
 					mediaList.add(new TV(f.getAbsolutePath()));
 					break;
 				case MOVIE:
-                        mediaList.add(new Movie(f.getAbsolutePath()));
+					mediaList.add(new Movie(f.getAbsolutePath()));
 					break;
-				case GENERIC:
-//                        mediaList.add(new GenericVideo(f.getAbsolutePath()));
-					break;
+				default:
+					ConsoleEvent.closeProgram("Unhandled type " + type.name() + " was passed onto MediaList.", -1);
 			}
 		}
 

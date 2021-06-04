@@ -1,20 +1,63 @@
 # Changelog
 
+### 6/4/2021 10:05
+
+#### Removal of ```GenericVideo.java```
+
+* The initial goal for ```GenericVideo``` does not align with the direction of the program. Upon the implementation of
+  user modification, the use case for generic video can be superseded by proper use of the ```Movie``` object.
+	* Other minor changes have been made throughout the code to accommodate for this.
+
+* This also means that the only two ```Media``` subclasses are ```TV``` and ```Movie```.
+	* Development will proceed with these two in mind, but others, such as ```Music``` can be implemented at a later
+	  time.
+
+
+#### Known bugs
+
+* Processing a directory with files that are not of the same extension as the user input will result in a ```null```
+  being output as a processed file. The program does not crash, however.
+
+#### Priorities
+
+~~Fix all ```Media``` subtypes.~~
+
+~~Fix metadata logic for ```Media``` subtypes.~~
+
+1. Ensure program can do basic operations such as batch rename and move.
+
+2. Allow for more granular user input.
+
+3. Refine user experience.
+
+4. Abstract command line operations from regular program operations.
+
+5. Implement proper logging support.
+
+6. Reimplement "history" output that summarizes all operations into a text file.
+
+*Future:* Implement online API media verification for additional metadata or corrections.
+
+
 ### 6/3/2021 22:37
 
 #### Reimplementation of ```Movie.java```
+
 * The ```Movie``` class has been remade to match its related classes.
 	* As with ```TV```, a large portion of how it gets information from its name has been streamlined and simplified.
 		* Many parts of the code have been changed to allow for a more polymorphic implementation.
 
 #### General
+
 * Minor changes to ```TV.java``` and ```MediaList.java``` to accommodate ```Movie.java```.
-* There is an argument to be made about processing each individual movie as a ```MediaList``` inside the queue; presumably,
-it will allow for a simpler implementation of multi-part movies or movies that have similar metadata in their name.
+* There is an argument to be made about processing each individual movie as a ```MediaList``` inside the queue;
+  presumably, it will allow for a simpler implementation of multi-part movies or movies that have similar metadata in
+  their name.
 
 #### Known bugs
-* Processing a directory with files that are not of the same extension as the user input will result in a ```null``` being
-output as a processed file. The program does not crash, however.
+
+* Processing a directory with files that are not of the same extension as the user input will result in a ```null```
+  being output as a processed file. The program does not crash, however.
 
 #### Priorities
 
@@ -31,7 +74,6 @@ output as a processed file. The program does not crash, however.
 
 4. Allow for more granular user input.
 
-
 ### 6/2/2021 17:51
 
 #### Reimplementation of ```TV.java```
@@ -45,13 +87,16 @@ output as a processed file. The program does not crash, however.
 	* ```String[] metadata``` has been removed as it does not provide any innate advantage over individual variables and
 	  reduces clarity.
 
-#### General	  
+#### General
+
 * ```Subtitles.java``` and ```MediaHistory.java``` have been removed.
-	* They provide functionality which could be of great use later on, but their implementation must be refined alongside 
-	the program. Because they are not essential, they have been removed to simplify the core aspects of the program.
-	  
+	* They provide functionality which could be of great use later on, but their implementation must be refined
+	  alongside the program. Because they are not essential, they have been removed to simplify the core aspects of the
+	  program.
+
 * ```MediaQueue``` and ```MediaList``` now implement ```Iterable```.
-	* They only call upon their underlying data structure's iterator, however. This functionality is sufficient right now.
+	* They only call upon their underlying data structure's iterator, however. This functionality is sufficient right
+	  now.
 
 #### Priorities
 
