@@ -1,5 +1,37 @@
 # Changelog
 
+### 6/3/2021 22:37
+
+#### Reimplementation of ```Movie.java```
+* The ```Movie``` class has been remade to match its related classes.
+	* As with ```TV```, a large portion of how it gets information from its name has been streamlined and simplified.
+		* Many parts of the code have been changed to allow for a more polymorphic implementation.
+
+#### General
+* Minor changes to ```TV.java``` and ```MediaList.java``` to accommodate ```Movie.java```.
+* There is an argument to be made about processing each individual movie as a ```MediaList``` inside the queue; presumably,
+it will allow for a simpler implementation of multi-part movies or movies that have similar metadata in their name.
+
+#### Known bugs
+* Processing a directory with files that are not of the same extension as the user input will result in a ```null``` being
+output as a processed file. The program does not crash, however.
+
+#### Priorities
+
+1. Fix all ```Media``` subtypes.
+	* Their implementation should be completely detached from the rest of the program.
+
+	* ```Media``` should not output anything to the command line nor should it have to worry about global variables
+	  in ```Main```.
+		* Using ```MediaList``` as the holster for metadata which ```Media``` would want in the future is an option.
+
+2. Fix metadata logic for ```Media``` subtypes.
+
+3. Ensure program can do basic operations such as batch rename and move.
+
+4. Allow for more granular user input.
+
+
 ### 6/2/2021 17:51
 
 #### Reimplementation of ```TV.java```

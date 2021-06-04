@@ -2,6 +2,7 @@ package general;
 
 import mediatypes.Media;
 import mediatypes.MediaTypes;
+import mediatypes.Movie;
 import mediatypes.TV;
 import yjohnson.ConsoleEvent;
 import yjohnson.PathFinder;
@@ -34,7 +35,7 @@ public class MediaList implements Iterable<Media> {
 					mediaList.add(new TV(f.getAbsolutePath()));
 					break;
 				case MOVIE:
-//                        mediaList.add(new Movie(f.getAbsolutePath()));
+                        mediaList.add(new Movie(f.getAbsolutePath()));
 					break;
 				case GENERIC:
 //                        mediaList.add(new GenericVideo(f.getAbsolutePath()));

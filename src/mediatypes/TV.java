@@ -121,7 +121,7 @@ public class TV extends Media {
 				}
 			} while (brackets);
 		}
-		this.customName = seriesName + String.format(" S%02dE%02d", this.seasonNumber, this.episodeNumber);
+		this.customName = seriesName.trim() + String.format(" - S%02dE%02d", this.seasonNumber, this.episodeNumber);
 
 	}
 }
