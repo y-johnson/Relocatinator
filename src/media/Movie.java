@@ -42,7 +42,7 @@ public class Movie extends Media {
 
 	private int findReleaseYear () {
 		for (Integer i : MOVIE_VALID_YEARS) {
-			if (this.getName().contains(i.toString())) {
+			if (this.file.getName().contains(i.toString())) {
 				return i;
 			}
 		}
@@ -55,9 +55,9 @@ public class Movie extends Media {
 	 * name of the show, the season the file corresponds to, and the episode number.
 	 */
 	public void extractTitleInfo () {
-		this.movieName = this.getName().substring(0, this.getName().lastIndexOf('.')).trim();
+		this.movieName = this.file.getName().substring(0, this.file.getName().lastIndexOf('.')).trim();
 
-		this.resolution = MetadataOps.getResolution(this.getName());
+		this.resolution = MetadataOps.getResolution(this.file.getName());
 		this.releaseYear = findReleaseYear();
 
 		for (String e : unwantedSpaces) {

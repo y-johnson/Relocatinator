@@ -8,6 +8,7 @@ import static media.MetadataOps.unwantedSpaces;
 
 public class TV extends Media {
 
+	public static final String SPECIAL = "Special";
 	private String seriesName;
 	private int seasonNumber = 1, episodeNumber;
 
@@ -58,7 +59,8 @@ public class TV extends Media {
 			}
 		}
 
-		return "Special";
+		this.episodeNumber = -1;
+		return fn.substring(0, fn.lastIndexOf("."));
 	}
 
 	/**
@@ -70,7 +72,7 @@ public class TV extends Media {
 	 */
 	private String seasons () {
 		String[] templates;
-		String fn = this.getName();
+		String fn = this.getFile().getName();
 		for (int i = 1; i < MetadataOps.MAX_NUMBER_OF_SEASONS; ++i) {
 			templates = new String[]{
 					"SEASON " + i,
@@ -85,23 +87,22 @@ public class TV extends Media {
 			for (String s : templates) {
 				if (fn.contains(s)) {
 					this.seasonNumber = i;
-					return this.getName().replace(s, "");
+					return this.getFile().getName().replace(s, "");
 				}
 			}
 
 		}
-		return this.getName();
+		return this.getFile().getName();
 	}
 
 	/**
 	 * Extracts relevant information out of the name of the file. This includes the
 	 * name of the show, the season the file corresponds to, and the episode number.
 	 */
-	public void extractTitleInfo () {
-		String filename = this.getAbsolutePath();
+	private void extractTitleInfo () {
 
 		// Store resolution from either the non-source directory or from the file's name
-		this.resolution = MetadataOps.getResolution(filename.replace(filename.substring(0, filename.lastIndexOf(File.separatorChar)), ""));
+		this.resolution = MetadataOps.getResolution(this.getFile().getName());
 
 		this.seriesName = episodes(seasons()).trim();
 
@@ -120,7 +121,12 @@ public class TV extends Media {
 				}
 			} while (brackets);
 		}
-		this.customName = seriesName.trim() + String.format(" - S%02dE%02d", this.seasonNumber, this.episodeNumber);
+
+		if (this.episodeNumber >= 0) {
+			this.customName = seriesName.trim() + String.format(" - S%02dE%02d", this.seasonNumber, this.episodeNumber);
+		} else {
+			this.customName = seriesName.trim() + " - " + SPECIAL;
+		}
 
 	}
 }

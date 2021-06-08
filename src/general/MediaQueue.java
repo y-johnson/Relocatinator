@@ -11,11 +11,12 @@ import java.util.LinkedList;
 
 public class MediaQueue implements Iterable<MediaList> {
 	private final LinkedList<MediaList> queue;
+	private File destinationDir;
 
 	public MediaQueue () {
 		this.queue = new LinkedList<>();
 
-		File src, dest;
+		File src;
 		String ext;
 
 		boolean validSrc, validExt, validDest;
@@ -33,8 +34,8 @@ public class MediaQueue implements Iterable<MediaList> {
 		} while (!validExt);
 
 		do {
-			dest = new File(ConsoleEvent.askUserForString("Input the destination directory"));
-			validDest = dest.isAbsolute();
+			this.destinationDir = new File(ConsoleEvent.askUserForString("Input the destination directory"));
+			validDest = this.destinationDir.isAbsolute();
 			if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
 		} while (!validDest);
 
@@ -59,12 +60,17 @@ public class MediaQueue implements Iterable<MediaList> {
 		return value;
 	}
 
+	public File getDestinationDir () {
+		return destinationDir;
+	}
+
 	public String stringOfContents () {
 		StringBuilder sb = new StringBuilder();
 		for (MediaList m : queue) {
 			sb.append(m.toString()).append("\n");
 			for (Media item : m) {
-				sb.append("-").append(item.getCustomName()).append("\n");
+				sb.append(item.getFile().getName()).append("\n");
+				sb.append(" -> ").append(item.getCustomName()).append("\n");
 			}
 		}
 		return sb.toString();

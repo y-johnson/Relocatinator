@@ -66,12 +66,16 @@ public class Main {
 
 		setup();
 
-		String overview = "Overview of Completed Operations: \n";
+		String overview = "\nOverview of Operations: \n";
 		StringBuilder sb = new StringBuilder();
 		sb.append(overview);
 		sb.append(queue.stringOfContents());
 
+
 		ConsoleEvent.print(sb.toString());
+
+		if (ConsoleEvent.askUserForBoolean("Confirm?")) Operations.organizedMove(queue);
+
 	}
 
 

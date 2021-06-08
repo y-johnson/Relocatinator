@@ -1,5 +1,69 @@
 # Changelog
 
+### 6/8/2021 17:44
+
+#### Implemented `Operations.organizedMove`
+
+* Name is a work-in-progress.
+* Essentially, it handles the basic filesystem operation of moving a file but with the added functionality afforded by
+  the `Media` subclasses.
+	* Move operations are handled by Java's `Files.move()` method.
+	* The options `ATOMIC_MOVE` and `REPLACE_EXISTING` are enabled.
+
+#### Updated `MetadataOps.java` with regular expressions
+
+* By using regex, the process of matching resolution can be expanded on to allow for a wider pool of comparisons.
+	* As a result, it is now possible to match the following formats for the three most common resolutions (1080p, 720p,
+	  480p):
+		- 1920x1080
+		- 1920 x 1080
+		- 1920x 1080p [The spacing is correct]
+		- 1080p
+		- 1080
+
+#### `Media` no longer extends `File` and now includes type information
+
+* This was changed to allow for more versatility with `Media` objects.
+	* Due to `File` objects being immutable, there would be overhead in reassigning a current `Media` object to another
+	  path due to it needing a new instantiation.
+	* To compensate, `Media` now own a File object which can be changed and retrieved with `setFile()` and `getFile()`.
+	* Additionally, implementation for `MediaTypes type` storage in `Media` objects has been finally added.
+* All classes that utilized this functionality have been updated to use the getter.
+
+#### General
+
+* `MediaList` now has proper support for `Movie` objects when deducing a list name.
+* `Main.java` has added the aforementioned move operation support to its pipeline.
+* `MediaQueue.stringOfContents()` is now more visually pleasing and has added information regarding the source file.
+
+#### Known bugs
+
+* Processing a directory with files that are not of the same extension as the user input will result in a ```null```
+  being output as a processed file. The program does not crash, however.
+
+* Some file names may include trigger phrases for `TV.episodes()` in the format of `E[digit][digit]` and can create
+  erroneous custom names that do not follow the user's expectations.
+	* Migrating `TV.seasons()` and `TV.episodes` to regex would most certainly fix this issue.
+
+> #### Priorities
+>
+> ~~Ensure program can do basic operations such as batch rename and move.~~
+>
+> 1. Allow for more granular user input.
+>
+> 2. Refine user experience.
+>
+> 3. Abstract command line operations from regular program operations.
+>
+> 4. Implement proper logging support.
+>
+> 5. Reimplement "history" output that summarizes all operations into a text file.
+>
+> *Future:* Implement online API media verification for additional metadata or corrections.
+>
+> *Future:* Make the program semi-automated with the usage of command line arguments to allow for scheduled or programmatic
+> organization.
+
 ### 6/4/2021 10:05
 
 #### Removal of ```GenericVideo.java```
@@ -11,7 +75,6 @@
 * This also means that the only two ```Media``` subclasses are ```TV``` and ```Movie```.
 	* Development will proceed with these two in mind, but others, such as ```Music``` can be implemented at a later
 	  time.
-
 
 #### Known bugs
 
@@ -37,7 +100,6 @@
 6. Reimplement "history" output that summarizes all operations into a text file.
 
 *Future:* Implement online API media verification for additional metadata or corrections.
-
 
 ### 6/3/2021 22:37
 

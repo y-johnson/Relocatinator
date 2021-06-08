@@ -43,11 +43,17 @@ public class MediaList implements Iterable<Media> {
 		}
 
 		for (Media m : this.mediaList) {
-			if (m.getClass() == TV.class) {
+			if (m.getType() == MediaTypes.TV) {
 				if (!listNames.containsKey(((TV) m).getSeriesName())) {
 					listNames.put(((TV) m).getSeriesName(), 1);
 				} else {
 					listNames.replace(((TV) m).getSeriesName(), listNames.get(((TV) m).getSeriesName()) + 1);
+				}
+			} else if (m.getType() == MediaTypes.MOVIE) {
+				if (!listNames.containsKey(((Movie) m).getMovieName())) {
+					listNames.put(((Movie) m).getMovieName(), 1);
+				} else {
+					listNames.replace(((Movie) m).getMovieName(), listNames.get(((Movie) m).getMovieName()) + 1);
 				}
 			}
 		}
