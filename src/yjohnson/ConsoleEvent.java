@@ -12,10 +12,14 @@ public class ConsoleEvent {
 	private static final String ESCAPE_LOOP_KEYWORD = "-DONE-";
 	private final static String YES_OR_NO = " [y/n]: ";
 	private final static String YES = "Y", NO = "N";
-	/* User input */
-	static Scanner sysin = new Scanner(System.in);
+	private static final Scanner sysin;
 	/* User Facing Boolean */
 	private static boolean showUserAllEvents = false;
+
+	/* User input */
+	static {
+		sysin = new Scanner(System.in);
+	}
 
 	static {
 		consoleLog.addHandler(Logging.fileHandler);
@@ -31,7 +35,7 @@ public class ConsoleEvent {
 	 * @param message message to be printed.
 	 */
 	public static void print (String message) {
-		System.out.print(message);
+		System.out.print(message + (message.endsWith("\n") ? "" : "\n"));
 		consoleLog.info("CONSOLE: " + message + "\n");
 	}
 
@@ -44,15 +48,15 @@ public class ConsoleEvent {
 
 		switch (lvl) {
 			case DETAIL:
-				if (showUserAllEvents) System.out.print(message);
+				if (showUserAllEvents) System.out.print(message + (message.endsWith("\n") ? "" : "\n"));
 				consoleLog.fine("[" + lvl + "]: " + message + "\n");
 				break;
 			case NOTICE:
-				if (showUserAllEvents) System.out.print(message);
+				if (showUserAllEvents) System.out.print(message + (message.endsWith("\n") ? "" : "\n"));
 				consoleLog.info("[" + lvl + "]: " + message + "\n");
 				break;
 			case ERROR:
-				System.err.print(message);
+				System.err.print(message + (message.endsWith("\n") ? "" : "\n"));
 				consoleLog.warning("[" + lvl + "]: " + message + "\n");
 		}
 	}
@@ -134,7 +138,6 @@ public class ConsoleEvent {
 	 */
 	public static String askUserForString (String message) {
 		sysin.nextLine();
-
 		if (message.endsWith(":")) {
 			message += " ";
 		} else if (!message.endsWith(": ")) {
@@ -142,9 +145,8 @@ public class ConsoleEvent {
 		}
 
 		print(message);
-		String newString = sysin.nextLine().trim();
+		String newString = sysin.nextLine();
 
-		// When user input is valid, log it
 		logUserInput(newString);
 		return newString;
 	}

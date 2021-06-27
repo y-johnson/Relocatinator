@@ -22,16 +22,21 @@ public class MediaQueue implements Iterable<MediaList> {
 		boolean validSrc, validExt, validDest;
 
 		do {
-			src = new File(ConsoleEvent.askUserForString("Input the source directory").trim());
-			validSrc = src.isDirectory();
-			if (!validSrc) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
-		} while (!validSrc);
+			do {
+				src = new File(ConsoleEvent.askUserForString("Input the source directory").trim());
+				validSrc = src.isDirectory();
+				if (!validSrc) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
+			} while (!validSrc);
 
-		do {
-			ext = ConsoleEvent.askUserForString("Input the file extension (e.g. '.mkv', '.mp4',...). It must start with a '.'");
-			validExt = ext.startsWith(".");
-			if (!validExt) ConsoleEvent.print("Invalid extension.", ConsoleEvent.logStatus.ERROR);
-		} while (!validExt);
+			do {
+				ext = ConsoleEvent.askUserForString("Input the file extension (e.g. '.mkv', '.mp4',...). It must start with a '.'");
+				validExt = ext.startsWith(".");
+				if (!validExt) ConsoleEvent.print("Invalid extension.", ConsoleEvent.logStatus.ERROR);
+			} while (!validExt);
+
+			MediaList subqueue = new MediaList(src.toPath(), ext, askUserForMediaType(src.getAbsolutePath()));
+			queue.add(subqueue);
+		} while (ConsoleEvent.askUserForBoolean("Add more files to the queue?"));
 
 		do {
 			this.destinationDir = new File(ConsoleEvent.askUserForString("Input the destination directory"));
@@ -39,8 +44,7 @@ public class MediaQueue implements Iterable<MediaList> {
 			if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
 		} while (!validDest);
 
-		MediaList subqueue = new MediaList(src.toPath(), ext, askUserForMediaType(src.getAbsolutePath()));
-		queue.add(subqueue);
+
 	}
 
 	/**

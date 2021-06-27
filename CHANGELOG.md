@@ -1,5 +1,35 @@
 # Changelog
 
+### 6/27/2021 10:52
+
+#### General
+* Reorganized `TV.java`
+	* Added regex functionality into `episodes()` to allow for more refined episode detection.
+* Added additional queueing functionality to `MediaQueue.java`
+	* It will now prompt for additional files to queue.
+
+#### Known bugs
+
+* Processing a directory with files that are not of the same extension as the user input will result in a ```null```
+  being output as a processed file. The program does not crash, however.
+
+> #### Priorities
+>
+> 1. Allow for more granular user input.
+>
+> 2. Refine user experience.
+>
+> 3. Abstract command line operations from regular program operations.
+>
+> 4. Implement proper logging support.
+>
+> 5. Reimplement "history" output that summarizes all operations into a text file.
+>
+> *Future:* Implement online API media verification for additional metadata or corrections.
+>
+> *Future:* Make the program semi-automated with the usage of command line arguments to allow for scheduled or programmatic
+> organization.
+
 ### 6/8/2021 17:44
 
 #### Implemented `Operations.organizedMove`
