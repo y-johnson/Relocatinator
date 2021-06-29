@@ -1,5 +1,9 @@
 package media;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import yjohnson.ConsoleEvent;
+
 import java.util.regex.Pattern;
 
 import static media.MetadataOps.unwantedBrackets;
@@ -11,10 +15,11 @@ public class TV extends Media {
 
 	private static final String[] regex = {
 			"Episode (?<num>\\d{1,3})",
-			"S\\d{1,2}[-+]? ?E(?<num>\\d{1,3})+",
+			" ?E(?<num>\\d{1,3})+",
+//			"S\\d{1,2}[-+]? ?E(?<num>\\d{1,3})+",
 			"- (?<num>\\d{1,3})"
 	};
-
+	private static final Logger logger = LoggerFactory.getLogger(TV.class);
 	private String seriesName;
 	private int seasonNumber = 1, episodeNumber;
 
@@ -27,6 +32,7 @@ public class TV extends Media {
 	public TV (String pathname) {
 		super(pathname, MediaTypes.TV);
 		this.extractTitleInfo();
+		logger.info("Created \"{}\" ({}) from source file \"{}\"", this.getCustomName(), this.getClass().getName(), this.getFile().getName());
 	}
 
 	public String getSeriesName () {
@@ -48,40 +54,54 @@ public class TV extends Media {
 	 * @return a string of what episode it determined from the file name in '01' notation, "Special" if it could not.
 	 */
 	private String episodes (String fn) {
-		String[] templates;
-		for (String s : regex) {
-			var p = Pattern.compile(
-					s,
-					Pattern.CASE_INSENSITIVE
-			);
+		logger.debug("Parsing episode information for {} object \"{}\".", this.getClass().getName(), this.getFile().getName());
+		if (this.getFile().getName().matches("\\d{1,3}")) { // If the name contains a number between 0 and 999
+			String[] templates;
+			for (String templatePattern : regex) {
+				logger.trace("Matching pattern \"{}\" against \"{}\".", templatePattern, this.getFile().getName());
 
-			var m = p.matcher(this.file.getName());
+				var p = Pattern.compile(
+						templatePattern,
+						Pattern.CASE_INSENSITIVE
+				);
 
-			if (m.find()) {
-				this.episodeNumber = Integer.parseInt(m.group("num"));
-				return fn.substring(0, fn.toLowerCase().indexOf(m.group()));
+				var m = p.matcher(this.getFile().getName());
+
+				if (m.find()) {
+					this.episodeNumber = Integer.parseInt(m.group("num"));
+					logger.debug("Pattern \"{}\" matches against the filename with a result of {}.", templatePattern, this.episodeNumber);
+					return fn.substring(0, fn.toLowerCase().indexOf(m.group()));
+				} else {
+					logger.trace("Failed matching pattern \"{}\" against \"{}\".", templatePattern, this.getFile().getName());
+				}
 			}
-		}
+			logger.debug("Regex pattern matching failed for \"{}\", attempting lazy search.", this.getFile().getName());
 
-		for (int i = 1; i < MetadataOps.MAX_NUMBER_OF_EPISODES; ++i) {
+			for (int i = 1; i < MetadataOps.MAX_NUMBER_OF_EPISODES; ++i) {
+				templates = new String[]{
+						String.format("Episode %2d", i),
+						String.format("Episode %d", i),
+						String.format("- %03d", i),
+						String.format("- %02d", i),
+						"E" + String.format("%02d ", i),
+						("E" + i + " ")
+				};
 
-			templates = new String[]{
-					String.format("Episode %2d", i),
-					String.format("Episode %d", i),
-					String.format("- %03d", i),
-					String.format("- %02d", i),
-					"E" + String.format("%02d ", i),
-					("E" + i + " ")
-			};
-
-			for (String s : templates) {
-				if (fn.toLowerCase().contains(s.toLowerCase())) {
-					this.episodeNumber = i;
+				for (String template : templates) {
+					if (fn.toLowerCase().contains(template.toLowerCase())) {
+						this.episodeNumber = i;
+						logger.debug("Template \"{}\" matches against the filename with a result of {}.", template, this.episodeNumber);
 //					return fn.substring(0, fn.lastIndexOf("."));
-					return fn.substring(0, fn.toLowerCase().indexOf(s.toLowerCase()));
+						String substring = fn.substring(0, fn.toLowerCase().indexOf(template.toLowerCase()));
+
+						logger.trace("Returning \"{}\" as reduced filename.", substring);
+						return substring;
+					}
 				}
 			}
 		}
+
+		logger.warn("No episode information could be retrieved from the filename of \"{}\"; assigning -1 as episode number.", this.getFile().getName());
 		this.episodeNumber = -1;
 		return fn;
 	}
@@ -94,6 +114,8 @@ public class TV extends Media {
 	 * @return the modified name of the file.
 	 */
 	private String seasons () {
+		// TODO: This method is inefficient; implementing regex patterns would speed it up and refine it.
+		logger.debug("Parsing season information for {} object \"{}\".", this.getClass().getName(), this.getFile().getName());
 		String[] templates;
 		String filename = this.getFile().getName();
 		String fn = removeUnwantedSpaces(filename.substring(0, filename.lastIndexOf('.')));
@@ -108,14 +130,16 @@ public class TV extends Media {
 					"S0" + i
 			};
 
-			for (String s : templates) {
-				if (fn.contains(s)) {
+			for (String template : templates) {
+				if (fn.contains(template)) {
 					this.seasonNumber = i;
-					return fn.replace(s, "");
+					logger.debug("Template \"{}\" matches against the filename with a result of {}.", template, this.seasonNumber);
+					return fn.replace(template, "");
 				}
 			}
 
 		}
+		logger.debug("No season information could be retrieved from the filename of \"{}\"; assigning 1 as season number.", this.getFile().getName());
 		return fn;
 	}
 
@@ -124,7 +148,6 @@ public class TV extends Media {
 	 * name of the show, the season the file corresponds to, and the episode number.
 	 */
 	private void extractTitleInfo () {
-
 		// Store resolution from either the non-source directory or from the file's name
 		this.resolution = MetadataOps.getResolution(this.getFile().getName());
 

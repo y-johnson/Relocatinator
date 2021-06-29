@@ -1,32 +1,25 @@
 package yjohnson;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Logger;
 
 public class ConsoleEvent {
-	private static final Logger consoleLog = Logger.getLogger(ConsoleEvent.class.getName());
+	private static final Logger consoleLog = LoggerFactory.getLogger(ConsoleEvent.class);
 	private static final String INVALID_RESPONSE = "Invalid response. Try again.";
 	private static final String SEPARATOR = " / ";
 	private static final String ESCAPE_LOOP_KEYWORD = "-DONE-";
 	private final static String YES_OR_NO = " [y/n]: ";
 	private final static String YES = "Y", NO = "N";
 	private static final Scanner sysin;
-	/* User Facing Boolean */
-	private static boolean showUserAllEvents = false;
 
 	/* User input */
 	static {
 		sysin = new Scanner(System.in);
-	}
-
-	static {
-		consoleLog.addHandler(Logging.fileHandler);
-	}
-
-	public static void setShowUserAllEvents (boolean showUserAllEvents) {
-		ConsoleEvent.showUserAllEvents = showUserAllEvents;
+		System.setProperty("org.slf4j.simpleLogger.logFile", "log.txt");
 	}
 
 	/**
@@ -36,7 +29,7 @@ public class ConsoleEvent {
 	 */
 	public static void print (String message) {
 		System.out.print(message + (message.endsWith("\n") ? "" : "\n"));
-		consoleLog.info("CONSOLE: " + message + "\n");
+		consoleLog.info("SYSTEM: {}", message);
 	}
 
 	/**
@@ -45,19 +38,18 @@ public class ConsoleEvent {
 	 * @param message message to be printed.
 	 */
 	public static void print (String message, logStatus lvl) {
-
+		String s = message + (message.endsWith("\n") ? "" : "\n");
 		switch (lvl) {
 			case DETAIL:
-				if (showUserAllEvents) System.out.print(message + (message.endsWith("\n") ? "" : "\n"));
-				consoleLog.fine("[" + lvl + "]: " + message + "\n");
+				consoleLog.debug("{}", message);
 				break;
 			case NOTICE:
-				if (showUserAllEvents) System.out.print(message + (message.endsWith("\n") ? "" : "\n"));
-				consoleLog.info("[" + lvl + "]: " + message + "\n");
+				System.out.print(s);
+				consoleLog.info("{}", message);
 				break;
 			case ERROR:
-				System.err.print(message + (message.endsWith("\n") ? "" : "\n"));
-				consoleLog.warning("[" + lvl + "]: " + message + "\n");
+				System.err.print(s);
+				consoleLog.warn("{}", message);
 		}
 	}
 
@@ -137,7 +129,6 @@ public class ConsoleEvent {
 	 * @return the string that the user input.
 	 */
 	public static String askUserForString (String message) {
-		sysin.nextLine();
 		if (message.endsWith(":")) {
 			message += " ";
 		} else if (!message.endsWith(": ")) {

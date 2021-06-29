@@ -3,6 +3,67 @@
 ### 6/27/2021 10:52
 
 #### General
+
+* Improved logging implementation with `SLF4J`.
+	* Using `SLF4J` allows for dynamic logging implementations that do not tie up the entire codebase to a singular
+	  framework. This makes future-proofing the code easier and enhances interoperability.
+		* When compiling, `SLF4J` must be added to the `-classpath` argument alongside the logging library of choice.
+			* `log4j` was the one chosen for development.
+			* More information can be found on [SLF4J's site](http://www.slf4j.org/manual.html).
+
+	* Logging is output to a `log.out` file in the working directory.
+	* Added some logging functionality to various classes.
+		* `TV`, `Main`, `MetadataOps`, and `ConsoleEvent` have had logging implemented or improved.
+			* `ConsoleEvent` has been thoroughly reworked to accommodate these changes, and `Logging` (the Class) has
+			  been removed.
+		* All classes will have logging implemented in the future.
+
+* Logs are no longer output on the console.
+* `HandBrake` (the Class) has been removed.
+	* The implementation of this class was built on the idea of a single-minded and monolithic program. As a result, it
+	  clashes with the direction of the overall program.
+	* The implementation of similar functionality is being considered but is not a priority; the stability and
+	  reliability of what's currently being worked on takes priority.
+
+#### Known bugs
+
+* Processing a directory with files that are not of the same extension as the user input will result in a ```null```
+  being output as a processed file. The program does not crash, however.
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+> #### Priorities
+>
+> 1. Allow for more granular user input.
+>
+> 2. Refine user experience.
+>
+> 3. Abstract command line operations from regular program operations.
+>
+> 4. ~~Implement proper logging support.~~ Add logging to all classes and methods that would benefit from it it.
+>
+> 5. Reimplement "history" output that summarizes all operations into a text file.
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or programmatic
+> organization.
+
+
+### 6/27/2021 10:52
+
+#### General
+
 * Reorganized `TV.java`
 	* Added regex functionality into `episodes()` to allow for more refined episode detection.
 * Added additional queueing functionality to `MediaQueue.java`
