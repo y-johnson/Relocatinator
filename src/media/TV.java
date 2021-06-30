@@ -14,10 +14,10 @@ public class TV extends Media {
 	public static final String SPECIAL = "Special";
 
 	private static final String[] regex = {
-			"Episode (?<num>\\d{1,3})",
-			" ?E(?<num>\\d{1,3})+",
+			"(?<seq>Episode (?<num>\\d{1,3}))",
+			" ?(?<seq>E(?<num>\\d{1,3})+)",
 //			"S\\d{1,2}[-+]? ?E(?<num>\\d{1,3})+",
-			"- (?<num>\\d{1,3})"
+			"(?<seq>- (?<num>\\d{1,3}))"
 	};
 	private static final Logger logger = LoggerFactory.getLogger(TV.class);
 	private String seriesName;
@@ -55,27 +55,32 @@ public class TV extends Media {
 	 */
 	private String episodes (String fn) {
 		logger.debug("Parsing episode information for {} object \"{}\".", this.getClass().getName(), this.getFile().getName());
-		if (this.getFile().getName().matches("\\d{1,3}")) { // If the name contains a number between 0 and 999
+		if (fn.matches(".*\\d{1,3}.*")) { // If the name contains a number between 0 and 999
 			String[] templates;
 			for (String templatePattern : regex) {
-				logger.trace("Matching pattern \"{}\" against \"{}\".", templatePattern, this.getFile().getName());
+				logger.trace("Matching pattern \"{}\" against \"{}\".", templatePattern, fn);
 
 				var p = Pattern.compile(
 						templatePattern,
 						Pattern.CASE_INSENSITIVE
 				);
 
-				var m = p.matcher(this.getFile().getName());
+				var m = p.matcher(fn);
 
-				if (m.find()) {
+				if (m.find() && m.groupCount() == 2) {
 					this.episodeNumber = Integer.parseInt(m.group("num"));
 					logger.debug("Pattern \"{}\" matches against the filename with a result of {}.", templatePattern, this.episodeNumber);
-					return fn.substring(0, fn.toLowerCase().indexOf(m.group()));
+					String seq = m.group("seq");
+					try {
+						return fn.substring(0, fn.indexOf(seq));
+					} catch (StringIndexOutOfBoundsException e) {
+						ConsoleEvent.closeProgram("Could not remove string \"" + seq + "\" from \"" + fn + "\".", -1);
+					}
 				} else {
-					logger.trace("Failed matching pattern \"{}\" against \"{}\".", templatePattern, this.getFile().getName());
+					logger.trace("Failed matching pattern \"{}\" against \"{}\".", templatePattern, fn);
 				}
 			}
-			logger.debug("Regex pattern matching failed for \"{}\", attempting lazy search.", this.getFile().getName());
+			logger.debug("Regex pattern matching failed for \"{}\", attempting lazy search.", fn);
 
 			for (int i = 1; i < MetadataOps.MAX_NUMBER_OF_EPISODES; ++i) {
 				templates = new String[]{
@@ -178,5 +183,11 @@ public class TV extends Media {
 			if (s.contains(e)) s = s.replace(e, " ").trim();
 		}
 		return s;
+	}
+
+	@Override
+	public boolean isValid () {
+		/* If the file exists and both the series name and custom name exist, then it is a valid TV object */
+		return this.getFile().isFile() && !this.seriesName.isEmpty() && !this.customName.isEmpty();
 	}
 }

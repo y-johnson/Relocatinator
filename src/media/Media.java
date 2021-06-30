@@ -38,4 +38,6 @@ abstract public class Media {
 		return customName;
 	}
 
+	public abstract boolean isValid();
+
 }

@@ -25,7 +25,7 @@ public class Main {
 	}
 
 	private static void setup () {
-		logger.info("Starting program.");
+		logger.info("Starting {}.", APP_NAME);
 		/* Intro for user */
 		StringBuilder sb = new StringBuilder();
 		sb.append('-').append(APP_NAME.toUpperCase()).append(" v").append(VERSION).append('-');

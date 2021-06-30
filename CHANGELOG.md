@@ -1,5 +1,62 @@
 # Changelog
 
+### 6/29/2021 22:15
+
+#### General
+
+* `Media` has a new abstract method.
+	* `isValid()` is a method whose main purpose is to determine whether every critical part of the object is "
+	  well-formed".
+		* Subsequent operations that need the object should invoke the method to prevent a critical exception.
+* `TV` has improved functionality
+	* Improved episode parsing and recognition by adding a regex group named `seq`.
+		* The matched string from this group is removed from the working filename.
+			* This implementation also improves overall code legibility.
+* `MediaList` (the Class) has been moved into `MediaQueue.java` (the file)
+	* This is because `MediaList` is only ever used in the context of an overarching `MediaQueue`.
+* More methods have had logging added. 
+
+#### Known bugs
+
+* Processing a directory with files that are not of the same extension as the user input will result in a ```null```
+  being output as a processed file. The program does not crash, however.
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+#### Priorities
+
+1. Add logging to all classes and methods that would benefit from it.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Abstract command line operations from regular program operations.
+	1. Remove all traces of `ConsoleEvent` from the classes that do not need it.
+	2. Move all of it to a dedicated CLI-to-program translation method/class.
+	3. Explore possibilities of different interfaces, such as:
+		- semi-automated, headless operation
+		- GUI
+		- command line arguments
+		- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
 ### 6/27/2021 10:52
 
 #### General
@@ -58,7 +115,6 @@
 >
 > ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or programmatic
 > organization.
-
 
 ### 6/27/2021 10:52
 

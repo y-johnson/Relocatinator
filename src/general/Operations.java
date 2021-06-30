@@ -16,7 +16,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 public class Operations {
 
 	public static void organizedMove (MediaQueue mQ) {
-		for (MediaList mL : mQ) {
+		for (MediaQueue.MediaList mL : mQ) {
 			for (Media m : mL) {
 				String sb;
 				Path p;

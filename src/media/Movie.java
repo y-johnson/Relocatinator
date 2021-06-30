@@ -82,4 +82,10 @@ public class Movie extends Media {
 			this.customName = movieName;
 		}
 	}
+
+	@Override
+	public boolean isValid () {
+		/* If the file exists and both the movie name and custom name exist, then it is a valid Movie object */
+		return this.getFile().isFile() && !this.movieName.isEmpty() && !this.customName.isEmpty();
+	}
 }

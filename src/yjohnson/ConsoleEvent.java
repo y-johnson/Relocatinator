@@ -29,7 +29,7 @@ public class ConsoleEvent {
 	 */
 	public static void print (String message) {
 		System.out.print(message + (message.endsWith("\n") ? "" : "\n"));
-		consoleLog.info("SYSTEM: {}", message);
+		consoleLog.info("SYSTEM: {}", message.trim());
 	}
 
 	/**
@@ -38,6 +38,7 @@ public class ConsoleEvent {
 	 * @param message message to be printed.
 	 */
 	public static void print (String message, logStatus lvl) {
+		message = message.trim();
 		String s = message + (message.endsWith("\n") ? "" : "\n");
 		switch (lvl) {
 			case DETAIL:
