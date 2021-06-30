@@ -28,7 +28,7 @@ public class Movie extends Media {
 	 * @param path the path to the Media file
 	 */
 	public Movie (String path) {
-		super(path, MediaTypes.MOVIE);
+		super(path, MediaType.MOVIE);
 		extractTitleInfo();
 	}
 

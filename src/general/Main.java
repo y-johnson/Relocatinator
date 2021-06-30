@@ -1,20 +1,20 @@
 package general;
 
+import media.MediaQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yjohnson.ConsoleEvent;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Main {
 
+	private static final Logger logger = LoggerFactory.getLogger(Main.class);
 	public static String APP_NAME;
 	public static String VERSION;
 	public static File PROGRAM_DIR;
 	public static Date CURR_DATE;
-	private static final Logger logger = LoggerFactory.getLogger(Main.class);
 	private static MediaQueue queue;
 
 	static {
@@ -38,11 +38,41 @@ public class Main {
 
 	}
 
+	private static void userMediaQueueCLI () {
+		logger.debug("User is creating media queue.");
+		File src, destinationDir;
+		String ext;
+		boolean validSrc, validExt, validDest;
+
+		do {
+			do {
+				src = new File(ConsoleEvent.askUserForString("Input the source directory").trim());
+				validSrc = src.isDirectory();
+				if (!validSrc) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
+			} while (!validSrc);
+
+			do {
+				ext = ConsoleEvent.askUserForString("Input the file extension (e.g. '.mkv', '.mp4',...). It must start with a '.'");
+				validExt = ext.startsWith(".");
+				if (!validExt) ConsoleEvent.print("Invalid extension.", ConsoleEvent.logStatus.ERROR);
+			} while (!validExt);
+
+			do {
+				destinationDir = new File(ConsoleEvent.askUserForString("Input the destination directory"));
+				validDest = destinationDir.isAbsolute();
+				if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
+			} while (!validDest);
+
+			queue = new MediaQueue(src.toPath(), ext, destinationDir.toPath(), ConsoleEvent.askUserForMediaType(destinationDir.getAbsolutePath()));
+
+		} while (ConsoleEvent.askUserForBoolean("Add more files to the queue?"));
+
+
+	}
 
 	public static void main (String[] args) {
 		setup();
-		queue = new MediaQueue();
-
+		userMediaQueueCLI();
 		String overview = "Overview of Operations: ";
 
 		String sb = overview +

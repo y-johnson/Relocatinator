@@ -1,5 +1,85 @@
 # Changelog
 
+### 6/30/2021 15:41
+
+#### New branch: *cli-abstraction*
+
+#### `ConsoleEvent` has been removed from all major classes
+
+* `ConsoleEvent` will be used with the project, primarily within CLI applications.
+* This abstraction had reverberating effects throughout the project, all of which are notable.
+
+#### `MediaQueue`
+
+* Now located in the `media` package.
+* The constructor now has four parameters:
+	- The source directory of the files to search for.
+	- The extension to filter with.
+	- The destination directory.
+		- This may be removed in favor of a postponed declaration.
+	- The type to assign them as.
+
+* The arguments are checked before code execution for "validity" and will throw an `IllegalArgumentException()` if they
+  are not valid.
+* Previous operations that prompted a program close through `ConsoleEvent` now log at the `ERROR` level.
+
+#### `MediaType`
+
+* Renamed from `MediaTypes`.
+* The enum now features the following method.
+  ```java 
+  public abstract Media instantiate (Path path);
+  ```
+	* This method must be overridden by every future `MediaType`.
+	* The purpose of this change is to guarantee that every future `MediaType` possesses a way to instantiate its
+	  corresponding class, rather than having to maintain multiple areas of code whenever new ones are added.
+		* It now has a logger to be primarily used whenever a given path does not correspond to a file.
+
+#### `Main`
+
+* `ConsoleEvent` functionality from `MediaQueue` has been moved into a new method:
+  ``` java
+  private static void userMediaQueueCLI (); 
+  ```
+
+#### Known bugs
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+#### Priorities
+
+1. Add logging to all classes and methods that would benefit from it.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Abstract command line operations from regular program operations.
+	1. ~~Remove all traces of `ConsoleEvent` from the classes that do not need it.~~
+	2. ~~Move all of it to a dedicated CLI-to-program translation method/class.~~
+	3. Explore possibilities of different interfaces, such as:
+		- semi-automated, headless operation
+		- GUI
+		- command line arguments
+		- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
 ### 6/29/2021 22:15
 
 #### General
@@ -26,8 +106,8 @@
 	  variable from the files it contains. Because no files are present, the name is left null, and the program resumes
 	  normal operation.
 
-By adding an isEmpty() check on the internal data structure, MediaQueue will only add a MediaList when the
-aforementioned returns false.
+	* By adding an `isEmpty()` check on the internal data structure, `MediaQueue` will only add a `MediaList` when the
+	  aforementioned returns false.
 
 * After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
   allowing user input.

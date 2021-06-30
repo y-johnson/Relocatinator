@@ -1,6 +1,7 @@
 package general;
 
 import media.Media;
+import media.MediaQueue;
 import media.Movie;
 import media.TV;
 import yjohnson.ConsoleEvent;

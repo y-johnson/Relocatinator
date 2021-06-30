@@ -1,5 +1,6 @@
 package yjohnson;
 
+import media.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,6 +212,23 @@ public class ConsoleEvent {
 		print(message, logStatus.ERROR);
 		print("Program will now close.", logStatus.ERROR);
 		System.exit(exitCode);
+	}
+
+	/**
+	 * Helper method to condense constructor of MediaQueue. Uses ConsoleEvent to get user input regarding what type they
+	 * want the files to be classified as.
+	 *
+	 * @param dir directory to be presented to the user.
+	 * @return the type of Media the user selected.
+	 */
+	public static MediaType askUserForMediaType (String dir) {
+		ArrayList<String> typeList = new ArrayList<>();
+		for (MediaType e : MediaType.values()) {
+			typeList.add(e.toString());
+		}
+		MediaType value = MediaType.values()[askUserForOption("\nSelect the media type for files in " + dir, typeList) - 1];
+		print("Media type of current operation: " + value, logStatus.NOTICE);
+		return value;
 	}
 
 	public enum logStatus {
