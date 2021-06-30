@@ -14,12 +14,20 @@
 			* This implementation also improves overall code legibility.
 * `MediaList` (the Class) has been moved into `MediaQueue.java` (the file)
 	* This is because `MediaList` is only ever used in the context of an overarching `MediaQueue`.
-* More methods have had logging added. 
+* More methods have had logging added.
 
 #### Known bugs
 
-* Processing a directory with files that are not of the same extension as the user input will result in a ```null```
-  being output as a processed file. The program does not crash, however.
+* ~~Processing a directory with files that are not of the same extension as the user input will result in a ```null```
+  being output as a processed file. The program does not crash, however.~~
+	* It occurred due to MediaList objects being added to the MediaQueue regardless of whether they had anything in
+	  them.
+	* So, if a directory were to not contain any matching files, the list would be empty. MediaList deduces its name
+	  variable from the files it contains. Because no files are present, the name is left null, and the program resumes
+	  normal operation.
+
+By adding an isEmpty() check on the internal data structure, MediaQueue will only add a MediaList when the
+aforementioned returns false.
 
 * After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
   allowing user input.
