@@ -218,7 +218,6 @@ public class ConsoleEvent {
 	 * Helper method to condense constructor of MediaQueue. Uses ConsoleEvent to get user input regarding what type they
 	 * want the files to be classified as.
 	 *
-	 * @param dir directory to be presented to the user.
 	 * @return the type of Media the user selected.
 	 */
 	public static MediaType askUserForMediaType () {
