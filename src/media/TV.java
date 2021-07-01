@@ -3,6 +3,7 @@ package media;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static media.MetadataOps.unwantedBrackets;
@@ -15,10 +16,15 @@ public class TV extends Media {
 	private static final String[] regex = {
 			"(?<seq>Episode (?<num>\\d{1,3}))",
 			" ?(?<seq>E(?<num>\\d{1,3})+)",
-//			"S\\d{1,2}[-+]? ?E(?<num>\\d{1,3})+",
 			"(?<seq>- (?<num>\\d{1,3}))"
 	};
 	private static final Logger logger = LoggerFactory.getLogger(TV.class);
+	private static final Pattern[] regexSeasonAndEp = {
+			Pattern.compile("(?i)(?: *- ?)? ?(?<seasonInd>S(?<season>0*[1-9][0-9]*|0)) *(?<epInd>E(?<episode>0*([1-9][0-9]*|0)))"),
+			Pattern.compile(
+					"(?i)(?:(?: *- ?)? ?(?<seasonInd>Season ?\\b(?<season>0*([1-9][0-9]*|0))))? *(?: *- ?)? *(?<epInd>Episode ?\\b(?<episode>0*([1-9][0-9]*|0)))"),
+			Pattern.compile("(?i)(?: *- ?)? ?(?<seasonInd>(?<season>0*([1-9][0-9]*|0))) *x *(?: *- ?)? *(?<epInd>(?<episode>0*([1-9][0-9]*|0)))")
+	};
 	private String seriesName;
 	private int seasonNumber = 1, episodeNumber;
 
@@ -40,10 +46,6 @@ public class TV extends Media {
 
 	public int getSeasonNumber () {
 		return seasonNumber;
-	}
-
-	public int getEpisodeNumber () {
-		return episodeNumber;
 	}
 
 	/**
@@ -92,7 +94,6 @@ public class TV extends Media {
 					if (fn.toLowerCase().contains(template.toLowerCase())) {
 						this.episodeNumber = i;
 						logger.debug("Template \"{}\" matches against the filename with a result of {}.", template, this.episodeNumber);
-//					return fn.substring(0, fn.lastIndexOf("."));
 						String substring = fn.substring(0, fn.toLowerCase().indexOf(template.toLowerCase()));
 
 						logger.trace("Returning \"{}\" as reduced filename.", substring);
@@ -155,7 +156,8 @@ public class TV extends Media {
 		// Store resolution from either the non-source directory or from the file's name
 		this.resolution = MetadataOps.getResolution(this.getFile().getName());
 
-		this.seriesName = episodes(seasons()).trim();
+		parseTVInfo();
+//		this.seriesName = episodes(seasons()).trim();
 
 		boolean brackets = true;
 		for (int i = 0; i < unwantedBrackets.length - 1; i = i + 2) {
@@ -176,6 +178,39 @@ public class TV extends Media {
 			this.customName = seriesName.trim() + String.format(" - S%02dE%02d", this.seasonNumber, this.episodeNumber);
 		} else {
 			this.customName = seriesName.trim() + " - " + SPECIAL;
+		}
+
+	}
+
+	private void parseTVInfo () {
+		logger.info("Parsing TV information for \"{}\"", this.getFile().getName());
+		for (Pattern p : regexSeasonAndEp) {
+			String fn = removeUnwantedSpaces(this.getFile().getName().substring(0, this.getFile().getName().lastIndexOf('.')));
+			logger.trace("Proposed file name \"{}\" -> \"{}\"", this.getFile().getName().substring(0, this.getFile().getName().lastIndexOf('.')), fn);
+			Matcher matcher = p.matcher(fn);
+			if (matcher.find()) {
+				logger.debug("Pattern \"{}\" matches against \"{}\".", p, fn);
+				if (matcher.group("season") != null) this.seasonNumber = Integer.parseInt(matcher.group("season"));
+				if (matcher.group("episode") != null) this.episodeNumber = Integer.parseInt(matcher.group("episode"));
+				this.seriesName = fn.replace(matcher.group(0), "").trim();
+				logger.debug(
+						"{} parse resulted in season # {} and episode # {} with a series name of \"{}\"",
+						this.getFile().getName(),
+						this.seasonNumber,
+						this.episodeNumber,
+						this.seriesName
+				);
+				if (matcher.group("seasonInd") != null && matcher.group("epInd") != null && this.seasonNumber >= 0) {
+					return;
+				} else {
+					// TODO: This block should allow for case by case assignments if the previous operations did not fully assign season and episode.
+					logger.warn("Not all groups matched, defaulting to legacy code.");
+					this.seriesName = episodes(seasons()).trim();
+				}
+			} else {
+				logger.warn("Not all groups matched, defaulting to legacy code.");
+				this.seriesName = episodes(seasons()).trim();
+			}
 		}
 
 	}
