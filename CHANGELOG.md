@@ -1,5 +1,61 @@
 # Changelog
 
+### 6/30/2021 23:15
+
+#### General
+
+* `MediaQueue`'s `File destinationDir` private variable and the `Path target` parameter have been removed.
+	* The queue does not need to know where the files are going for any of its operations.
+* `ConsoleEvent.askUserForMediaType()`'s parameter `String dir` has been removed.
+* `Main` has been reorganized; the prompt for a destination directory only occurs after the user confirms that the queue
+  looks OK and before it starts doing an organized move.
+* `Operations` now has a logger and does not utilize `ConsoleEvent` anymore.
+
+#### Known bugs
+
+* The `seasons()` method of the `TV` class does not accurately parse season information from the file's name if the
+  season is larger than 9. It is possible that it reads the first number and believes it is done, thereby ignoring the
+  second digit and misrepresenting the output season. This can lead to the program overwriting it's own output and even
+  data loss.
+  ![image](https://user-images.githubusercontent.com/62960501/124062581-8ca8ff80-d9f6-11eb-837b-08bb0020fd21.png)
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+* Series name is not being properly parsed.
+	* When both `- E00` and `S01E00` notation are used, the resulting string may keep the last unnecessary dash as a
+	  leftover. This generates incorrect series names and worsens the resulting custom file names.
+	  ![image](https://user-images.githubusercontent.com/62960501/124062820-09d47480-d9f7-11eb-8bd2-9f7c120fe684.png)
+
+#### Priorities
+
+1. Add logging to all classes and methods that would benefit from it.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
 ### 6/30/2021 15:41
 
 #### New branch: *cli-abstraction*

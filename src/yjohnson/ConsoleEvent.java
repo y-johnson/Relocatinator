@@ -221,12 +221,12 @@ public class ConsoleEvent {
 	 * @param dir directory to be presented to the user.
 	 * @return the type of Media the user selected.
 	 */
-	public static MediaType askUserForMediaType (String dir) {
+	public static MediaType askUserForMediaType () {
 		ArrayList<String> typeList = new ArrayList<>();
 		for (MediaType e : MediaType.values()) {
 			typeList.add(e.toString());
 		}
-		MediaType value = MediaType.values()[askUserForOption("\nSelect the media type for files in " + dir, typeList) - 1];
+		MediaType value = MediaType.values()[askUserForOption("Select the media type for the current operation:", typeList) - 1];
 		print("Media type of current operation: " + value, logStatus.NOTICE);
 		return value;
 	}

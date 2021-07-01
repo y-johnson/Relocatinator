@@ -33,14 +33,14 @@ public class Main {
 
 		// Clears the string efficiently. https://stackoverflow.com/questions/5192512/how-can-i-clear-or-empty-a-stringbuilder
 		sb.setLength(0);
-		sb.append(APP_NAME).append(" will generate a log file called \"log.txt\" in the program's current operating directory.");
+		sb.append(APP_NAME).append(" will generate a log file called \"log.out\" in the program's current working directory.");
 		ConsoleEvent.print(sb.toString());
 
 	}
 
 	private static void userMediaQueueCLI () {
 		logger.debug("User is creating media queue.");
-		File src, destinationDir;
+		File src;
 		String ext;
 		boolean validSrc, validExt, validDest;
 
@@ -57,13 +57,7 @@ public class Main {
 				if (!validExt) ConsoleEvent.print("Invalid extension.", ConsoleEvent.logStatus.ERROR);
 			} while (!validExt);
 
-			do {
-				destinationDir = new File(ConsoleEvent.askUserForString("Input the destination directory"));
-				validDest = destinationDir.isAbsolute();
-				if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
-			} while (!validDest);
-
-			queue = new MediaQueue(src.toPath(), ext, destinationDir.toPath(), ConsoleEvent.askUserForMediaType(destinationDir.getAbsolutePath()));
+			queue = new MediaQueue(src.toPath(), ext, ConsoleEvent.askUserForMediaType());
 
 		} while (ConsoleEvent.askUserForBoolean("Add more files to the queue?"));
 
@@ -75,11 +69,22 @@ public class Main {
 		userMediaQueueCLI();
 		String overview = "Overview of Operations: ";
 
-		String sb = overview +
-				queue.stringOfContents();
+		String sb = overview + queue.stringOfContents();
 		ConsoleEvent.print(sb);
 
-		if (ConsoleEvent.askUserForBoolean("Confirm?")) Operations.organizedMove(queue);
+
+
+		if (ConsoleEvent.askUserForBoolean("Confirm?")) {
+			ConsoleEvent.print("Starting media queue move operation.");
+			File target;
+			boolean validDest;
+			do {
+				target = new File(ConsoleEvent.askUserForString("Input the destination directory"));
+				validDest = target.isAbsolute();
+				if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
+			} while (!validDest);
+			Operations.organizedMove(queue, target);
+		}
 
 	}
 

@@ -13,27 +13,20 @@ import java.util.LinkedList;
 public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 	private static final Logger logger = LoggerFactory.getLogger(MediaQueue.class);
 	private final LinkedList<MediaList> queue;
-	private File destinationDir;
 
 	/**
 	 * Constructs a LinkedList queue for MediaList objects, which in turn stores Media objects to process together. The resulting MediaQueue object is
 	 * iterable at the MediaList level but is meant to be the "accessible" data structure.
-	 *
+	 * <p>
 	 * The constructor will use the src and ext parameters to do a recursive file search within the src directory. It will store the paths of all files
 	 * that have the given extension.
 	 *
-	 * @param src the source directory to search within
-	 * @param ext the extension to filter by
-	 * @param target the destination directory
-	 * @param type the Media subtype to assign the file to
+	 * @param src    the source directory to search within
+	 * @param ext    the extension to filter by
+	 * @param type   the Media subtype to assign the file to
 	 */
-	public MediaQueue (Path src, String ext, Path target, MediaType type) {
-		logger.debug("Creating new media queue.");
-		boolean validSrc = src.toFile().isDirectory();
-		boolean validExt = ext.startsWith(".");
-		boolean validTarget = target.isAbsolute();
-
-		if (!validSrc) {
+	public MediaQueue (Path src, String ext, MediaType type) {
+		if (!src.toFile().isDirectory()) {
 			if (!src.toFile().exists()) throw new IllegalArgumentException(
 					"Given source path (src = \"" + src + "\") does not exist.");
 			else if (src.toFile().isFile()) throw new IllegalArgumentException(
@@ -41,16 +34,13 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 			else throw new IllegalArgumentException(
 						"Given source path (src = \"" + src + "\") for " + this.getClass().getName() + " constructor is not valid.");
 		}
-		if (!validExt) {
+		if (!ext.startsWith(".")) {
 			throw new IllegalArgumentException(
 					"Given extension string (ext = \"" + ext + "\") for " + this.getClass().getName() + " constructor is not valid.");
 		}
-		if (!validTarget) {
-			throw new IllegalArgumentException(
-					"Given target path (target = \"" + target + "\") for " + this.getClass().getName() + " constructor is not valid.");
-		}
 
-		destinationDir = target.toFile();
+
+		logger.debug("Creating new media queue.");
 		this.queue = new LinkedList<>();
 
 		MediaList list = new MediaList(src, ext, type);
@@ -65,10 +55,6 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 			);
 		}
 
-	}
-
-	public File getDestinationDir () {
-		return destinationDir;
 	}
 
 	public String stringOfContents () {
