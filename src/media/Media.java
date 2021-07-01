@@ -5,7 +5,7 @@ import java.io.File;
 abstract public class Media {
 	protected File file;
 	protected String customName, resolution = "Unknown";
-	MediaTypes type;
+	MediaType type;
 	/**
 	 * A superclass that serves as an intermediary between the File and respective media-related subclasses.
 	 * Stores the metadata of the files.
@@ -13,7 +13,7 @@ abstract public class Media {
 	 * @param path      the path to the Media file
 	 * @param mediatype the type of the media (TV, MOVIE, GENERIC)
 	 */
-	public Media (String path, MediaTypes mediatype) {
+	public Media (String path, MediaType mediatype) {
 		this.type = mediatype;
 		this.file = new File(path);
 	}
@@ -26,7 +26,7 @@ abstract public class Media {
 		this.file = file;
 	}
 
-	public MediaTypes getType () {
+	public MediaType getType () {
 		return type;
 	}
 
@@ -39,5 +39,5 @@ abstract public class Media {
 	}
 
 	public abstract boolean isValid();
-
 }
+

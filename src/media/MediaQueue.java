@@ -1,17 +1,11 @@
-package general;
+package media;
 
-import media.Media;
-import media.MediaTypes;
-import media.Movie;
-import media.TV;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import yjohnson.ConsoleEvent;
 import yjohnson.PathFinder;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -19,69 +13,48 @@ import java.util.LinkedList;
 public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 	private static final Logger logger = LoggerFactory.getLogger(MediaQueue.class);
 	private final LinkedList<MediaList> queue;
-	private File destinationDir;
 
-	public MediaQueue () {
+	/**
+	 * Constructs a LinkedList queue for MediaList objects, which in turn stores Media objects to process together. The resulting MediaQueue object is
+	 * iterable at the MediaList level but is meant to be the "accessible" data structure.
+	 * <p>
+	 * The constructor will use the src and ext parameters to do a recursive file search within the src directory. It will store the paths of all files
+	 * that have the given extension.
+	 *
+	 * @param src    the source directory to search within
+	 * @param ext    the extension to filter by
+	 * @param type   the Media subtype to assign the file to
+	 */
+	public MediaQueue (Path src, String ext, MediaType type) {
+		if (!src.toFile().isDirectory()) {
+			if (!src.toFile().exists()) throw new IllegalArgumentException(
+					"Given source path (src = \"" + src + "\") does not exist.");
+			else if (src.toFile().isFile()) throw new IllegalArgumentException(
+					"Given source path (src = \"" + src + "\") is a file; directory expected.");
+			else throw new IllegalArgumentException(
+						"Given source path (src = \"" + src + "\") for " + this.getClass().getName() + " constructor is not valid.");
+		}
+		if (!ext.startsWith(".")) {
+			throw new IllegalArgumentException(
+					"Given extension string (ext = \"" + ext + "\") for " + this.getClass().getName() + " constructor is not valid.");
+		}
+
+
 		logger.debug("Creating new media queue.");
 		this.queue = new LinkedList<>();
 
-		File src;
-		String ext;
-
-		boolean validSrc, validExt, validDest;
-
-		do {
-			do {
-				src = new File(ConsoleEvent.askUserForString("Input the source directory").trim());
-				validSrc = src.isDirectory();
-				if (!validSrc) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
-			} while (!validSrc);
-
-			do {
-				ext = ConsoleEvent.askUserForString("Input the file extension (e.g. '.mkv', '.mp4',...). It must start with a '.'");
-				validExt = ext.startsWith(".");
-				if (!validExt) ConsoleEvent.print("Invalid extension.", ConsoleEvent.logStatus.ERROR);
-			} while (!validExt);
-
-			MediaList subqueue = new MediaList(src.toPath(), ext, askUserForMediaType(src.getAbsolutePath()));
-			if (!subqueue.isEmpty()) {
-				queue.add(subqueue);
-			} else {
-				logger.warn(
-						"Generated media list (\"{}\", \"{}\") is empty; it will not be added to the queue.",
-						subqueue.getDirectory(),
-						subqueue.getExtension());
-			}
-		} while (ConsoleEvent.askUserForBoolean("Add more files to the queue?"));
-
-		do {
-			this.destinationDir = new File(ConsoleEvent.askUserForString("Input the destination directory"));
-			validDest = this.destinationDir.isAbsolute();
-			if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
-		} while (!validDest);
-
-
-	}
-
-	/**
-	 * Helper method to condense constructor of MediaQueue. Uses ConsoleEvent to get user input regarding what type they
-	 * want the files to be classified as.
-	 *
-	 * @param dir directory to be presented to the user.
-	 * @return the type of Media the user selected.
-	 */
-	private static MediaTypes askUserForMediaType (String dir) {
-		ArrayList<String> typeList = new ArrayList<>();
-		for (MediaTypes e : MediaTypes.values()) {
-			typeList.add(e.toString());
+		MediaList list = new MediaList(src, ext, type);
+		if (!list.isEmpty()) {
+			logger.debug("Media list (name = \"{}\", size = {}) added to queue.", list.name, list.size());
+			queue.add(list);
+		} else {
+			logger.warn(
+					"Generated media list (\"{}\", \"{}\") is empty; it will not be added to the queue.",
+					list.getDirectory(),
+					list.getExtension()
+			);
 		}
-		MediaTypes value = MediaTypes.values()[ConsoleEvent.askUserForOption("\nSelect the media type for files in " + dir, typeList) - 1];
-		ConsoleEvent.print("Media type of current operation: " + value, ConsoleEvent.logStatus.NOTICE);
-		return value;
-	}
 
-	public File getDestinationDir () {
-		return destinationDir;
 	}
 
 	public String stringOfContents () {
@@ -125,7 +98,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 		 * @param ext  the extension to filter by.
 		 * @param type the type to designate the media with.
 		 */
-		private MediaList (Path dir, String ext, MediaTypes type) {
+		private MediaList (Path dir, String ext, MediaType type) {
 			logger.debug("Creating new media list, type {}; searching for files with extension {} in {}", type.name(), ext, dir);
 			this.mediaList = new LinkedList<>();
 			this.dir = dir;
@@ -134,26 +107,21 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 
 			for (File f : PathFinder.findFiles(dir.toFile(), ext)) {
 				logger.trace("Adding {} to the list as a {}.", f.getName(), type.name());
-				switch (type) {
-					case TV:
-						mediaList.add(new TV(f.getAbsolutePath()));
-						break;
-					case MOVIE:
-						mediaList.add(new Movie(f.getAbsolutePath()));
-						break;
-					default:
-						ConsoleEvent.closeProgram("Unhandled type " + type.name() + " was passed onto MediaList.", -1);
+				try {
+					mediaList.add(type.instantiate(f.toPath()));
+				} catch (IllegalArgumentException e) {
+					logger.error("Passing file \"{}\" to {} instantiation method produced a \"Not a file\" error", f, type);
 				}
 
 				Media m = mediaList.getLast();
 				if (m.isValid()) {
-					if (m.getType() == MediaTypes.TV) {
+					if (m.getType() == MediaType.TV) {
 						if (!listNames.containsKey(((TV) m).getSeriesName())) {
 							listNames.put(((TV) m).getSeriesName(), 1);
 						} else {
 							listNames.replace(((TV) m).getSeriesName(), listNames.get(((TV) m).getSeriesName()) + 1);
 						}
-					} else if (m.getType() == MediaTypes.MOVIE) {
+					} else if (m.getType() == MediaType.MOVIE) {
 						if (!listNames.containsKey(((Movie) m).getMovieName())) {
 							listNames.put(((Movie) m).getMovieName(), 1);
 						} else {

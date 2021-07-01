@@ -2,7 +2,6 @@ package media;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import yjohnson.ConsoleEvent;
 
 import java.util.regex.Pattern;
 
@@ -30,7 +29,7 @@ public class TV extends Media {
 	 * @param pathname the path to the Media file
 	 */
 	public TV (String pathname) {
-		super(pathname, MediaTypes.TV);
+		super(pathname, MediaType.TV);
 		this.extractTitleInfo();
 		logger.info("Created \"{}\" ({}) from source file \"{}\"", this.getCustomName(), this.getClass().getName(), this.getFile().getName());
 	}
@@ -71,11 +70,8 @@ public class TV extends Media {
 					this.episodeNumber = Integer.parseInt(m.group("num"));
 					logger.debug("Pattern \"{}\" matches against the filename with a result of {}.", templatePattern, this.episodeNumber);
 					String seq = m.group("seq");
-					try {
-						return fn.substring(0, fn.indexOf(seq));
-					} catch (StringIndexOutOfBoundsException e) {
-						ConsoleEvent.closeProgram("Could not remove string \"" + seq + "\" from \"" + fn + "\".", -1);
-					}
+					return fn.substring(0, fn.indexOf(seq));
+
 				} else {
 					logger.trace("Failed matching pattern \"{}\" against \"{}\".", templatePattern, fn);
 				}
@@ -106,7 +102,10 @@ public class TV extends Media {
 			}
 		}
 
-		logger.warn("No episode information could be retrieved from the filename of \"{}\"; assigning -1 as episode number.", this.getFile().getName());
+		logger.warn(
+				"No episode information could be retrieved from the filename of \"{}\"; assigning -1 as episode number.",
+				this.getFile().getName()
+		);
 		this.episodeNumber = -1;
 		return fn;
 	}
@@ -162,7 +161,10 @@ public class TV extends Media {
 		for (int i = 0; i < unwantedBrackets.length - 1; i = i + 2) {
 			do {
 				if (this.seriesName.contains(unwantedBrackets[i]) && this.seriesName.contains(unwantedBrackets[i + 1])) {
-					String toRemove = this.seriesName.substring(this.seriesName.indexOf(unwantedBrackets[i]), this.seriesName.indexOf(unwantedBrackets[i + 1]) + 1);
+					String toRemove = this.seriesName.substring(
+							this.seriesName.indexOf(unwantedBrackets[i]),
+							this.seriesName.indexOf(unwantedBrackets[i + 1]) + 1
+					);
 					this.seriesName = this.seriesName.replace(toRemove, "").trim();
 				} else {
 					brackets = false;
