@@ -205,7 +205,7 @@ public class ConsoleEvent {
 	}
 
 	private static void logUserInput (String userInput) {
-		consoleLog.info("USER: " + userInput + "\n");
+		consoleLog.info("USER: " + userInput.trim());
 	}
 
 	public static void closeProgram (String message, int exitCode) {

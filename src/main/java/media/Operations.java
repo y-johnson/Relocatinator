@@ -1,14 +1,11 @@
-package general;
+package media;
 
-import media.Media;
-import media.MediaQueue;
-import media.Movie;
-import media.TV;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -70,14 +67,28 @@ public class Operations {
 	}
 
 	private static void moveMedia (Media from, Path to) {
-		logger.trace("Attempting to move {} file from \"{}\" to \"{}\"", from.getType(), from.getFile().getAbsolutePath(), to);
+		logger.info("Moving {} file from \"{}\" to \"{}\", {} disabled.", from.getType(), from.getFile().getAbsolutePath(), to, REPLACE_EXISTING);
+		logger.trace("Attempting to move {} file from \"{}\" to \"{}\".", from.getType(), from.getFile().getAbsolutePath(), to);
 		try {
 			Files.createDirectories(to.getParent());
-			Path target = Files.move(from.getFile().toPath(), to.toAbsolutePath(), ATOMIC_MOVE, REPLACE_EXISTING);
+			if (to.toFile().exists()) {
+				logger.warn("File already exists at \"{}\"; move operation may fail.", to);
+			}
+			Path target = Files.move(from.getFile().toPath(), to.toAbsolutePath(), ATOMIC_MOVE);
 			if (target.toFile().exists()) {
 				from.setFile(target.toFile());
 				logger.info("Moved {} to {}.", from.getFile().getName(), to);
 			}
+		} catch (FileAlreadyExistsException e) {
+			logger.error(
+					"A FileAlreadyExistException was thrown while attempting to move a {} file from \"{}\" to \"{}\"",
+					from.getType(),
+					from.getFile().getAbsolutePath(),
+					to
+			);
+			logger.error("Reason: {}", e.getReason());
+			logger.error(e.toString());
+			e.printStackTrace();
 		} catch (IOException e) {
 			logger.error(
 					"An IO exception was thrown while attempting to move a {} file from \"{}\" to \"{}\"",
@@ -85,7 +96,12 @@ public class Operations {
 					from.getFile().getAbsolutePath(),
 					to
 			);
+			logger.error(e.toString());
 			e.printStackTrace();
 		}
+	}
+
+	public enum options {
+		MOVE_WITHOUT_OVERWRITE
 	}
 }

@@ -1,5 +1,151 @@
 # Changelog
 
+### 7/2/2021 15:31
+
+#### Further refinements to `TV`
+
+* Abstracted and improved bracket removal functionality into its own method: `removeBrackets()`.
+	* Added the ability to remove multiple brackets of the same type.
+	* Now has logging.
+
+* Improved `parseTVInfo()`.
+	* It now features better redundancy for season and episode parsing.
+		* Added a regular expression array that exclusively matches episode and season information from a file name that
+		  does not match the ones in `regexSeasonAndEp`.
+		  ```java
+			  private static final Pattern[] regexSoloEp = {
+				  Pattern.compile(" *- ? *(?<epInd>E?(?<episode>0*([1-9][0-9]*|0)))"),
+				  Pattern.compile("(?<epInd>E?(?<episode>0*([1-9][0-9]*|0)))$")
+			  };
+			  private static final Pattern[] regexSoloSeason = {
+				  Pattern.compile("(?i)(?<seasonInd>Season ?\\b(?<season>0*([1-9][0-9]*|0)))"),
+				  Pattern.compile("(?i)(?<seasonInd>S(?<season>0*([1-9][0-9]*|0))) +"),
+			  };
+			```
+		* Similarly, season information also gets parsed from the file's name, bu tin the event that none is found, it
+		  will also search in the parent directory.
+	* If the method fails to parse properly, it will default to legacy functionality (the super slow one).
+	* Two helper methods have been added: `matchEpisodeOnly()` and `matchSeasonOnly()`.
+
+#### Known bugs
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+#### Priorities
+
+1. Semi-automated testing with JUnit.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> **Future:*** Consider using other algorithms to speed up execution.
+> > Using `String.contains()` and other string methods is not very optimal, but it is done repeatedly in the program. A possible improvement would be the [Boyer–Moore string-search algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm#Implementations).
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+>
+
+### 7/1/2021 14:35
+
+#### `TV` now parses with regular expressions
+
+* When extracting information from file names such as season and episode number, the new method `parseTVInfo()` will
+  first use regular expressions before defaulting to previous methods.
+	* There are currently three regular expressions in use, dedicated to different naming formats. They are able to
+	  parse most naming conventions though not all.
+	  ```java
+			private static final Pattern[] regexSeasonAndEp = {
+				Pattern.compile("(?i)(?: *- ?)? ?(?<seasonInd>S(?<season>0*[1-9][0-9]*|0)) *(?<epInd>E(?<episode>0*([1-9][0-9]*|0)))"),
+				Pattern.compile(
+						"(?i)(?:(?: *- ?)? ?(?<seasonInd>Season ?\\b(?<season>0*([1-9][0-9]*|0))))? *(?: *- ?)? *(?<epInd>Episode ?\\b(?<episode>0*([1-9][0-9]*|0)))"),
+				Pattern.compile("(?i)(?: *- ?)? ?(?<seasonInd>(?<season>0*([1-9][0-9]*|0))) *x *(?: *- ?)? *(?<epInd>(?<episode>0*([1-9][0-9]*|0)))")
+		 };
+		```
+
+#### Created `CLI` class
+
+* It is where all command-line interactions will be moved to and handled. The goal is to have the rest of the code not
+  depend on either it, or `ConsoleEvent`.
+
+* Multiple code segments have been moved from `Main` into this class.
+
+#### The `moveMedia()` operation will no longer overwrite
+
+* In case of any unprecedented operations that may lead to data-loss, the operation no longer has the `REPLACE_EXISTING`
+  flag.
+* This will likely be reimplemented in a more robust manner.
+
+#### Known bugs
+
+* ~~The `seasons()` method of the `TV` class does not accurately parse season information from the file's name if the
+  season is larger than 9. It is possible that it reads the first number and believes it is done, thereby ignoring the
+  second digit and misrepresenting the output season. This can lead to the program overwriting it's own output and even
+  data loss.~~
+  ![image](https://user-images.githubusercontent.com/62960501/124062581-8ca8ff80-d9f6-11eb-837b-08bb0020fd21.png)
+	* This issue has been addressed. Unless the naming format is largely unconventional, the information will be parsed
+	  correctly. Additionally, the program is now unable to overwrite files.
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+* ~~Series name is not being properly parsed.~~
+	* ~~When both `- E00` and `S01E00` notation are used, the resulting string may keep the last unnecessary dash as a
+	  leftover. This generates incorrect series names and worsens the resulting custom file names.~~
+	  ![image](https://user-images.githubusercontent.com/62960501/124062820-09d47480-d9f7-11eb-8bd2-9f7c120fe684.png)
+		* This issue has been addressed with the regex implementations.
+
+#### Priorities
+
+1. ~~Add logging to all classes and methods that would benefit from it.~~
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+>
+
 ### 6/30/2021 23:15
 
 #### General
@@ -27,6 +173,7 @@
   Invalid directory.			// This one appears as a response to the first request for a directory.
   /* USER ENTRY HERE */			// This would respond to the second request
   ```
+
 * Series name is not being properly parsed.
 	* When both `- E00` and `S01E00` notation are used, the resulting string may keep the last unnecessary dash as a
 	  leftover. This generates incorrect series names and worsens the resulting custom file names.
