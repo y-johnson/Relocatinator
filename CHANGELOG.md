@@ -125,8 +125,8 @@
 
 1. ~~Add logging to all classes and methods that would benefit from it.~~
 2. Allow for more granular user input and refine user experience.
-	1. Modifying created media files post-extraction.
-	2. Allow for users to dictate what goes together in the same folders.
+	- Modifying created media files post-extraction.
+	- Allow for users to dictate what goes together in the same folders.
 
 3. Explore possibilities of different interfaces, such as:
 	- semi-automated, headless operation
