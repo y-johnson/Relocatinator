@@ -21,11 +21,11 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 	 * The constructor will use the src and ext parameters to do a recursive file search within the src directory. It will store the paths of all files
 	 * that have the given extension.
 	 *
-	 * @param src    the source directory to search within
-	 * @param ext    the extension to filter by
-	 * @param type   the Media subtype to assign the file to
+	 * @param src  the source directory to search within
+	 * @param ext  the extension to filter by
+	 * @param type the Media subtype to assign the file to
 	 */
-	public MediaQueue (Path src, String ext, MediaType type) {
+	public MediaQueue(Path src, String ext, MediaType type) {
 		if (!src.toFile().isDirectory()) {
 			if (!src.toFile().exists()) throw new IllegalArgumentException(
 					"Given source path (src = \"" + src + "\") does not exist.");
@@ -57,7 +57,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 
 	}
 
-	public String stringOfContents () {
+	public String stringOfContents() {
 		StringBuilder sb = new StringBuilder();
 		for (MediaList m : queue) {
 			sb.append(m.toString()).append("\n");
@@ -69,7 +69,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 		return sb.toString();
 	}
 
-	public int size () {
+	public int size() {
 		int size = 0;
 		for (MediaList l : queue) {
 			size += l.size();
@@ -78,12 +78,12 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 	}
 
 	@Override
-	public Iterator<MediaList> iterator () {
+	public Iterator<MediaList> iterator() {
 		return queue.iterator();
 	}
 
-	public static class MediaList implements Iterable<Media> {
-		private static final Logger logger = LoggerFactory.getLogger(MediaList.class);
+	public class MediaList implements Iterable<Media> {
+		//		private static final Logger logger = LoggerFactory.getLogger(MediaList.class);
 		private final Path dir;
 		private final String ext;
 		private final LinkedList<Media> mediaList;
@@ -98,7 +98,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 		 * @param ext  the extension to filter by.
 		 * @param type the type to designate the media with.
 		 */
-		private MediaList (Path dir, String ext, MediaType type) {
+		private MediaList(Path dir, String ext, MediaType type) {
 			logger.debug("Creating new media list, type {}; searching for files with extension {} in {}", type.name(), ext, dir);
 			this.mediaList = new LinkedList<>();
 			this.dir = dir;
@@ -106,34 +106,17 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 			HashMap<String, Integer> listNames = new HashMap<>();
 
 			for (File f : PathFinder.findFiles(dir.toFile(), ext)) {
-				logger.trace("Adding {} to the list as a {}.", f.getName(), type.name());
 				try {
+					logger.trace("Adding {} to the list as a {}.", f.getName(), type.name());
 					mediaList.add(type.instantiate(f.toPath()));
 				} catch (IllegalArgumentException e) {
 					logger.error("Passing file \"{}\" to {} instantiation method produced a \"Not a file\" error", f, type);
+					logger.error(e.toString());
+					e.printStackTrace();
 				}
 
-				Media m = mediaList.getLast();
-				if (m.isValid()) {
-					if (m.getType() == MediaType.TV) {
-						if (!listNames.containsKey(((TV) m).getSeriesName())) {
-							listNames.put(((TV) m).getSeriesName(), 1);
-						} else {
-							listNames.replace(((TV) m).getSeriesName(), listNames.get(((TV) m).getSeriesName()) + 1);
-						}
-					} else if (m.getType() == MediaType.MOVIE) {
-						if (!listNames.containsKey(((Movie) m).getMovieName())) {
-							listNames.put(((Movie) m).getMovieName(), 1);
-						} else {
-							listNames.replace(((Movie) m).getMovieName(), listNames.get(((Movie) m).getMovieName()) + 1);
-						}
-					}
-				} else {
-					logger.error(
-							"Generated media file \"{}\" is incomplete or invalid. One of its values may have not been properly processed.",
-							m.getCustomName()
-					);
-				}
+				Media m = this.mediaList.getLast();
+				tallyNames(listNames, m);
 			}
 
 			int freq = -1;
@@ -146,29 +129,62 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 			logger.debug("List name has been set to {}. # of files with this name: {}.", this.name, freq);
 		}
 
+		/**
+		 * Counts the recurrence of a name throughout the files added to this MediaList. The roundup is stored in the
+		 * given HashMap. Handles new as well as repeating additions.
+		 * @param listNames hashmap to store results in.
+		 * @param m the media object to tally.
+		 */
+		private void tallyNames(HashMap<String, Integer> listNames, Media m) {
+			if (m.isValid()) {
+				switch (m.getType()) {
+					case TV:
+						if (!listNames.containsKey(((TV) m).getSeriesName())) {
+							logger.trace("Adding {} (type = {}) into list name roundup.");
+							listNames.put(((TV) m).getSeriesName(), 1);
+						} else {
+							listNames.replace(((TV) m).getSeriesName(), listNames.get(((TV) m).getSeriesName()) + 1);
+						}
+						break;
+					case MOVIE:
+						if (!listNames.containsKey(((Movie) m).getMovieName())) {
+							listNames.put(((Movie) m).getMovieName(), 1);
+						} else {
+							listNames.replace(((Movie) m).getMovieName(), listNames.get(((Movie) m).getMovieName()) + 1);
+						}
+						break;
+				}
+			} else {
+				logger.error(
+						"Generated media file \"{}\" is incomplete or invalid. One of its values may have not been properly processed.",
+						m.getCustomName()
+				);
+			}
+		}
+
 		@Override
-		public String toString () {
+		public String toString() {
 			return this.name;
 		}
 
-		public Path getDirectory () {
+		public Path getDirectory() {
 			return dir;
 		}
 
-		public String getExtension () {
+		public String getExtension() {
 			return ext;
 		}
 
-		public boolean isEmpty () {
+		public boolean isEmpty() {
 			return mediaList.isEmpty();
 		}
 
-		public int size () {
+		public int size() {
 			return mediaList.size();
 		}
 
 		@Override
-		public Iterator<Media> iterator () {
+		public Iterator<Media> iterator() {
 			return this.mediaList.iterator();
 		}
 	}

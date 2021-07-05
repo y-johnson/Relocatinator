@@ -25,14 +25,13 @@ public class Main {
 		CURR_DATE = new Date();
 	}
 
-	public static void main (String[] args) {
+	public static void main(String[] args) {
 		CLI.printHeader();
 		queue = CLI.createMediaQueueCLI(queue);
 		String overview = "Overview of Operations: ";
 
 		String sb = overview + queue.stringOfContents();
 		ConsoleEvent.print(sb);
-
 
 
 		if (ConsoleEvent.askUserForBoolean("Confirm?")) {

@@ -1,5 +1,10 @@
 # Changelog
 
+### 7/5/2021 14:20
+
+#### Slight changes
+* Some minor refactoring.
+
 ### 7/2/2021 15:31
 
 #### Further refinements to `TV`
