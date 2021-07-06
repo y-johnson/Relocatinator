@@ -2,106 +2,179 @@ package media;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import yjohnson.Checksum;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-
-import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class Operations {
 	private static final Logger logger = LoggerFactory.getLogger(Operations.class);
 
-	public static void organizedMove (MediaQueue mQ, File target) {
-		logger.info("Starting organized move operation into \"{}\" for given media queue.", target);
-		for (MediaQueue.MediaList mL : mQ) {
-			logger.trace("Processing Media objects within media list \"{}\".", mL.toString());
-			for (Media m : mL) {
-				logger.trace("Processing {} object \"{}\".", m.getClass().getName(), m.getCustomName());
-				String sb;
+	public static void organizedMove(MediaQueue mQ, File destinationDir) {
+		logger.info("Starting organized move operation into \"{}\" for given media queue.", destinationDir);
+		for (MediaQueue.MediaList mediaList : mQ) {
+			logger.trace("Processing Media objects within media list \"{}\".", mediaList.toString());
+			for (Media mediaObj : mediaList) {
+				MediaIOWrapper wrapper;
 				Path newFilePath;
-				String o = !target.toString()
-				                  .endsWith(File.separator) ? String.valueOf(File.separatorChar) : "";
-				switch (m.getType()) {
-					case TV:
-						TV tv = (TV) m;
+				logger.trace("Processing {} object \"{}\".", mediaObj.getClass().getName(), mediaObj.getCustomFilename());
 
-						sb = target +
-								o +
-								tv.getSeriesName() +
-								File.separatorChar +
-								"Season " +
-								tv.getSeasonNumber() +
-								File.separatorChar +
-								tv.getCustomName() +
-								m.getFile().getName().substring(m.getFile().getName().lastIndexOf('.'));
+				newFilePath = mediaObj.generateCustomPathStructure(destinationDir.toPath());
+				wrapper = new MediaIOWrapper(mediaObj, mediaObj.getFile().toPath(), newFilePath);
+				try {
+					if (copyMedia(wrapper)) {
+						wrapper.media.setFile(newFilePath.toFile());
+						logger.debug(
+								"Successfully copied \"{}\" over to destination; deleting original file (at = \"{}\").",
+								wrapper.media.getCustomFilename(),
+								wrapper.from
+						);
 
-						newFilePath = new File(sb).toPath();
-						break;
-					case MOVIE:
-						Movie movie = (Movie) m;
+						removeSourceFilePostMove(wrapper);
+					}
 
-						sb = target +
-								o +
-								File.separatorChar +
-								movie.getCustomName() +
-								m.getFile()
-								 .getName()
-								 .substring(m.getFile().getName().lastIndexOf('.'));
-
-						newFilePath = new File(sb).toPath();
-						break;
-					default:
-						logger.error("Given type {} has not had \"organized move\" implemented", m.getType());
-						throw new UnsupportedOperationException("Unexpected value: " + m.getType());
+				} catch (FileAlreadyExistsException e) {
+					logger.error(
+							"Media copy operation failed; there is already a file in the target destination (target = {}).",
+							wrapper.to.toAbsolutePath()
+					);
+					logger.error(e.toString());
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					logger.error(
+							"Media copy operation failed; the operation was interrupted by the security manager (target = {}).",
+							wrapper.to.toAbsolutePath()
+					);
+					logger.error(e.toString());
+					e.printStackTrace();
+				} catch (IOException e) {
+					logger.error(
+							"An IO exception was thrown while attempting to copy a {} file from \"{}\" to \"{}\"",
+							wrapper.media.getType(),
+							wrapper.media.getFile().getAbsolutePath(),
+							wrapper.to
+					);
+					logger.error(e.toString());
+					e.printStackTrace();
 				}
-				moveMedia(m, newFilePath);
-
 			}
 
 		}
 
 	}
 
-	private static void moveMedia (Media from, Path to) {
-		logger.info("Moving {} file from \"{}\" to \"{}\", {} disabled.", from.getType(), from.getFile().getAbsolutePath(), to, REPLACE_EXISTING);
-		logger.trace("Attempting to move {} file from \"{}\" to \"{}\".", from.getType(), from.getFile().getAbsolutePath(), to);
-		try {
-			Files.createDirectories(to.getParent());
-			if (to.toFile().exists()) {
-				logger.warn("File already exists at \"{}\"; move operation may fail.", to);
-			}
-			Path target = Files.move(from.getFile().toPath(), to.toAbsolutePath(), ATOMIC_MOVE);
-			if (target.toFile().exists()) {
-				from.setFile(target.toFile());
-				logger.info("Moved {} to {}.", from.getFile().getName(), to);
-			}
-		} catch (FileAlreadyExistsException e) {
-			logger.error(
-					"A FileAlreadyExistException was thrown while attempting to move a {} file from \"{}\" to \"{}\"",
-					from.getType(),
-					from.getFile().getAbsolutePath(),
-					to
+
+	/**
+	 * Initiates a copy operation using the Java NIO package's Files class. Using the MediaIOWrapper class, it will validate a checksum for the
+	 * operation; if the destination file was successfully copied and has an equivalent checksum, the method returns true.
+	 * <p></p>
+	 * When either of the above are false, the method returns false. The method will not attempt to delete the erroneously copied file in such cases.
+	 *
+	 * @param wrapper the MediaIOWrapper that encapsulates the Media to be moved.
+	 *
+	 * @return true if copy operation (and checksum validation) succeeded, false otherwise.
+	 */
+	private static boolean copyMedia(MediaIOWrapper wrapper) throws IOException {
+		logger.info(
+				"Copying {} file from \"{}\" to \"{}\".",
+				wrapper.media.getType(),
+				wrapper.media.getFile().getAbsolutePath(),
+				wrapper.to
+		);
+		if (wrapper.to.toFile().exists()) {
+			logger.warn("File already exists at \"{}\"; move operation may fail.", wrapper.to
 			);
-			logger.error("Reason: {}", e.getReason());
-			logger.error(e.toString());
+		}
+
+		Files.createDirectories(wrapper.to.getParent());
+		logger.trace("Created/verified directories \"{}\".", wrapper.to.getParent());
+
+		logger.info("Initiating file copy (from = {}, to = {}).", wrapper.media.getFile().getName(), wrapper.to);
+		Path target = Files.copy(wrapper.media.getFile().toPath(), wrapper.to.toAbsolutePath());
+		if (target.toFile().exists() && wrapper.validateChecksum()) {
+			wrapper.media.setFile(target.toFile());
+			logger.info("Copied {} to {}.", wrapper.media.getFile().getName(), wrapper.to);
+			return true;
+		}
+
+
+		return false;
+	}
+
+	private static void removeSourceFilePostMove(MediaIOWrapper wrapper) {
+		try {
+			Files.delete(wrapper.from);
+			if (Files.notExists(wrapper.from)) {
+				logger.debug(
+						"Successfully deleted \"{}\" from original source (at = \"{}\").",
+						wrapper.media.getCustomFilename(),
+						wrapper.from
+				);
+			} else {
+				logger.warn(
+						"Failed to delete \"{}\" from original source (at = \"{}\").",
+						wrapper.media.getCustomFilename(),
+						wrapper.from
+				);
+			}
+		} catch (NoSuchFileException e) {
+			logger.warn(
+					"File \"{}\" does not exist, but it was not deleted by this program. Subsequent operations may fail if interfered with.",
+					wrapper.from
+			);
+			logger.warn(e.toString());
 			e.printStackTrace();
 		} catch (IOException e) {
 			logger.error(
-					"An IO exception was thrown while attempting to move a {} file from \"{}\" to \"{}\"",
-					from.getType(),
-					from.getFile().getAbsolutePath(),
-					to
+					"An IO exception was thrown while attempting to delete the original file from an organized move operation (orig. = \"{}\").",
+					wrapper.from
 			);
 			logger.error(e.toString());
 			e.printStackTrace();
 		}
 	}
 
-	public enum options {
-		MOVE_WITHOUT_OVERWRITE
+	private static class MediaIOWrapper {
+		private final Media media;
+		private final Path from, to;
+		String checksum;
+
+		public MediaIOWrapper(Media media, Path from, Path to) {
+			this.media = media;
+			this.from = from;
+			this.to = to;
+			try {
+				checksum = Checksum.getChecksum(from.toString());
+			} catch (Exception e) {
+				logger.error("Error when calculating checksum for \"{}\".", media.getMediaTitle());
+				e.printStackTrace();
+			}
+		}
+
+		private boolean validateChecksum() {
+			logger.debug("Validating checksum for media {}.", media.getCustomFilename());
+			if (!this.from.toFile().exists() || !this.to.toFile().isFile()) return false;
+
+			try {
+				if (this.checksum.equals(Checksum.getChecksum(this.to.toString()))) {
+					logger.info("MD5 checksum (MD5 = {}) matches for media {}.", this.checksum, media.getCustomFilename());
+					return true;
+				} else {
+					logger.warn(
+							"MD5 checksum failed for for media {}. (expected = {}, actual = {}",
+							media.getCustomFilename(),
+							this.checksum,
+							Checksum.getChecksum(this.to.toString())
+					);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return false;
+		}
 	}
 }
