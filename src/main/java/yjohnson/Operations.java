@@ -11,36 +11,65 @@ import java.nio.file.*;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
-public class Operations {
+public class Operations{
 	private static final Logger logger = LoggerFactory.getLogger(Operations.class);
 
-	public static void organizedMove(MediaQueue mQ, File destinationDir) {
+	public enum FileOperation{
+		MOVE_FILE_ATOMICALLY,
+	}
+	public Operations(){
+	}
+
+	public void organizedMove(MediaQueue mQ, File destinationDir) {
+		MediaIOWrapper wrapper;
 
 		logger.info("Starting organized move operation into \"{}\" for given media queue.", destinationDir);
 		for (MediaQueue.MediaList mediaList : mQ) {
 			logger.trace("Processing Media objects within media list \"{}\".", mediaList.toString());
 			for (Media mediaObj : mediaList) {
-				MediaIOWrapper wrapper;
 				Path newFilePath;
 				logger.trace("Processing {} object \"{}\".", mediaObj.getClass().getName(), mediaObj.getCustomFilename());
 
 				newFilePath = mediaObj.generateCustomPathStructure(destinationDir.toPath());
+
 				wrapper = new MediaIOWrapper(mediaObj, mediaObj.getFile().toPath(), newFilePath);
 
 				try {
-					Files.move(wrapper.from.toAbsolutePath(), wrapper.to, ATOMIC_MOVE);
+					File tmp;
+
+					/*
+					 * Every call to a java.nio.Files method that involves a target directory must also include a Files.createDirectories() for the
+					 * target's parent path to avoid a NoSuchFileException
+					 */
+					{
+						Files.createDirectories(wrapper.to.getParent());
+						logger.trace("Created/verified directories exist at \"{}\".", wrapper.to.getParent());
+
+						wrapper.setOperationSuccess((tmp = Files.move(wrapper.from.toAbsolutePath(), wrapper.to, ATOMIC_MOVE).toFile()).exists());
+					}
+
+					if (wrapper.didOperationSucceed() && tmp.isFile()) {
+						wrapper.media.setFile(tmp);
+					}
 					logger.info("Successfully moved \"{}\" to \"{}\".", wrapper.media.getCustomFilename(), wrapper.to);
 
 				} catch (NoSuchFileException e) {
+					wrapper.setOperationSuccess(false);
+
 					logger.error("Java NIO reports a {}.", e.toString());
 					logger.error(e.toString());
+
 					e.printStackTrace();
 				} catch (AtomicMoveNotSupportedException e) {
+					wrapper.setOperationSuccess(false);
+
 					logger.warn(
 							"Could not move file atomically with Java NIO implementation (not supported). It is likely that the source and target destinations are in different FileStores.");
 					logger.warn("Attempting \"safe\" non-atomic move w/ checksum validation.");
 					safeNonAtomicMove(wrapper, newFilePath);
 				} catch (IOException e) {
+					wrapper.setOperationSuccess(false);
+
 					logger.error(
 							"An IO exception was thrown while attempting to move a {} file from \"{}\" to \"{}\".",
 							wrapper.media.getType(),
@@ -57,7 +86,7 @@ public class Operations {
 
 	}
 
-	private static void safeNonAtomicMove(MediaIOWrapper wrapper, Path newFilePath) {
+	private void safeNonAtomicMove(MediaIOWrapper wrapper, Path newFilePath) {
 		logger.debug(
 				"Attempting safe move operation on {} object {} (from = \"{}\", to = \"{}\").",
 				wrapper.media.getClass().getSimpleName(),
@@ -66,6 +95,7 @@ public class Operations {
 				wrapper.to
 		);
 		try {
+
 			if (copyMedia(wrapper)) {
 				wrapper.media.setFile(newFilePath.toFile());
 				logger.debug(
@@ -115,7 +145,7 @@ public class Operations {
 	 *
 	 * @return true if copy operation (and checksum validation) succeeded, false otherwise.
 	 */
-	private static boolean copyMedia(MediaIOWrapper wrapper) throws IOException {
+	private boolean copyMedia(MediaIOWrapper wrapper) throws IOException {
 		logger.info(
 				"Copying {} file from \"{}\" to \"{}\".",
 				wrapper.media.getType(),
@@ -130,7 +160,6 @@ public class Operations {
 		if (wrapper.to.getParent().toFile().exists()) {
 			Files.createDirectories(wrapper.to.getParent());
 			logger.trace("Created/verified directories \"{}\".", wrapper.to.getParent());
-
 		}
 
 		logger.debug("Initiating file copy (media = {}, to = {}).", wrapper.media.getCustomFilename(), wrapper.to);
@@ -156,6 +185,7 @@ public class Operations {
 						wrapper.media.getCustomFilename(),
 						wrapper.from
 				);
+				wrapper.setOperationSuccess(true);
 			} else {
 				logger.warn(
 						"Failed to delete \"{}\" from original source (at = \"{}\").",
@@ -180,15 +210,20 @@ public class Operations {
 		}
 	}
 
+
+
 	private static class MediaIOWrapper {
 		private final Media media;
 		private final Path from, to;
 		String checksum;
+		private boolean operationSuccess;
 
 		public MediaIOWrapper(Media media, Path from, Path to) {
+
 			this.media = media;
 			this.from = from;
 			this.to = to;
+
 			try {
 				logger.trace(
 						"Created new {} instance (media = {}, from = \"{}\", to = \"{}\").",
@@ -227,6 +262,14 @@ public class Operations {
 				e.printStackTrace();
 			}
 			return false;
+		}
+
+		public boolean didOperationSucceed() {
+			return operationSuccess;
+		}
+
+		public void setOperationSuccess(boolean operationSuccess) {
+			this.operationSuccess = operationSuccess;
 		}
 	}
 }

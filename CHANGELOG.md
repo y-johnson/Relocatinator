@@ -1,5 +1,16 @@
 # Changelog
 
+### 7/6/2021 9:54
+
+#### Adjusted `organizedMove()`
+
+* The method withing the class are now non-static, and it has a constructor.
+	* This class will change in the future with the potential of separating operations into subclasses if the class gets
+	  large enough.
+	* `Main` has been adjusted accordingly.
+* The `java.nio.Files` methods throw `NoSuchFileException`s when the parent directory of its target path are not
+  created. By adding a `Files.createDirectories()` invocation on the path's parent, this issue has been resolved.
+
 ### 7/5/2021 22:20
 
 #### Reimplemented `java.nio.Files.move()`
@@ -16,8 +27,8 @@
 
 #### Known bugs
 
-* Due to priority resting in the `TV` class, `Movie` is not receiving any development support at this time and
-  therefore *may* be broken.
+* Due to priority being in the `TV` class, `Movie` is not receiving any development support at this time and therefore *
+  may* be broken.
 * After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
   allowing user input.
   ``` java
@@ -29,7 +40,7 @@
 * There is a hard-to-reproduce bug that occurs when starting a `java.nio.Files` operation such as `move()` or `copy()`
   where the method may throw a `NoSuchFileException` regardless of whether the file is present. Furthermore, it may
   occur on only some files within a directory but not others.
-  * This may be related with files being in different partitions or drives.
+	* This may be related with files being in different partitions or drives.
 
 #### Priorities
 

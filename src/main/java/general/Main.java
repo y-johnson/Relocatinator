@@ -34,8 +34,9 @@ public class Main {
 		String sb = overview + queue.stringOfContents();
 		ConsoleEvent.print(sb);
 
-
 		if (ConsoleEvent.askUserForBoolean("Confirm?")) {
+			Operations op = new Operations();
+
 			ConsoleEvent.print("Starting media queue move operation.");
 			File target;
 			boolean validDest;
@@ -44,7 +45,7 @@ public class Main {
 				validDest = target.isAbsolute();
 				if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
 			} while (!validDest);
-			Operations.organizedMove(queue, target);
+			op.organizedMove(queue, target);
 		}
 
 		ConsoleEvent.print("Move finalized!");
