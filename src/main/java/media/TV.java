@@ -14,7 +14,6 @@ import static media.MetadataOps.unwantedSpaces;
 public class TV extends Media {
 
 	private static final Logger logger = LoggerFactory.getLogger(TV.class);
-	private static final String SPECIAL = "Special";
 	private static final Pattern[] regexSeasonAndEp = {
 			Pattern.compile("(?i)(?: *- ?)? ?(?<seasonInd>S(?<season>0*[1-9][0-9]*|0)) *(?<epInd>E(?<episode>0*([1-9][0-9]*|0)))"),
 			Pattern.compile(
@@ -64,7 +63,7 @@ public class TV extends Media {
 		if (this.episodeNumber >= 0) {
 			this.customName = seriesName.trim() + String.format(" - S%02dE%02d", this.seasonNumber, this.episodeNumber);
 		} else {
-			this.customName = seriesName.trim() + " - " + SPECIAL;
+			this.customName = seriesName.trim() + " - " + MetadataOps.EPISODE_UNKNOWN;
 		}
 	}
 
@@ -376,12 +375,12 @@ public class TV extends Media {
 		Path generated = new File(
 				path +
 						(path.toString().endsWith(File.separator) ? "" : String.valueOf(File.separatorChar)) +
-						this.getMediaTitle() +
+						this.getMediaTitle().trim() +
 						File.separatorChar +
 						"Season " +
 						this.getSeasonNumber() +
 						File.separatorChar +
-						this.getCustomFilename() +
+						this.getCustomFilename().trim() +
 						this.getExt()
 		).toPath();
 
@@ -401,7 +400,7 @@ public class TV extends Media {
 
 	@Override
 	public String getMediaTitle() {
-		return this.seriesName;
+		return this.seriesName.trim();
 	}
 
 	@Override

@@ -1,7 +1,8 @@
 package general;
 
+import media.Media;
 import media.MediaQueue;
-import media.Operations;
+import yjohnson.Operations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yjohnson.ConsoleEvent;
@@ -46,6 +47,7 @@ public class Main {
 			Operations.organizedMove(queue, target);
 		}
 
+		ConsoleEvent.print("Move finalized!");
 	}
 
 
