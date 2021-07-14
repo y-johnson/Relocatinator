@@ -1,5 +1,57 @@
 # Changelog
 
+### 7/14/2021 12:05
+
+#### Implemented copy-paste-delete operation
+
+* This operation is the safe, non-atomic move operation implemented beforehand, but can now be invoked explicitly.
+* A sizeable amount of refactoring has been done to accommodate the changes, including name changes that are more
+  descriptive.
+
+#### Known bugs
+
+* Due to priority being in the `TV` class, `Movie` is not receiving any development support at this time and therefore *
+  may* be broken.
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+* There is a hard-to-reproduce bug that occurs when starting a `java.nio.Files` operation such as `move()` or `copy()`
+  where the method may throw a `NoSuchFileException` regardless of whether the file is present. Furthermore, it may
+  occur on only some files within a directory but not others.
+	* This may be related with files being in different partitions or drives.
+
+#### Priorities
+
+1. Semi-automated testing with JUnit.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> **Future:*** Consider using other algorithms to speed up execution.
+> > Using `String.contains()` and other string methods is not very optimal, but it is done repeatedly in the program. A possible improvement would be the [Boyer–Moore string-search algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm#Implementations).
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
 ### 7/6/2021 9:54
 
 #### Adjusted `organizedMove()`

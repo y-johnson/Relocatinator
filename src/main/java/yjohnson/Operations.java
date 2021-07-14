@@ -11,16 +11,13 @@ import java.nio.file.*;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
-public class Operations{
+public class Operations {
 	private static final Logger logger = LoggerFactory.getLogger(Operations.class);
 
-	public enum FileOperation{
-		MOVE_FILE_ATOMICALLY,
-	}
-	public Operations(){
+	public Operations() {
 	}
 
-	public void organizedMove(MediaQueue mQ, File destinationDir) {
+	public void ioStandardMoveRunner(MediaQueue mQ, File destinationDir) {
 		MediaIOWrapper wrapper;
 
 		logger.info("Starting organized move operation into \"{}\" for given media queue.", destinationDir);
@@ -50,8 +47,8 @@ public class Operations{
 
 					if (wrapper.didOperationSucceed() && tmp.isFile()) {
 						wrapper.media.setFile(tmp);
+						logger.info("Successfully moved \"{}\" to \"{}\".", wrapper.media.getCustomFilename(), wrapper.to);
 					}
-					logger.info("Successfully moved \"{}\" to \"{}\".", wrapper.media.getCustomFilename(), wrapper.to);
 
 				} catch (NoSuchFileException e) {
 					wrapper.setOperationSuccess(false);
@@ -85,8 +82,55 @@ public class Operations{
 		}
 
 	}
+	public void ioNonAtomicMoveRunner(MediaQueue mQ, File destinationDir) {
+		MediaIOWrapper wrapper;
 
-	private void safeNonAtomicMove(MediaIOWrapper wrapper, Path newFilePath) {
+		logger.info("Starting safe move operation into \"{}\" for given media queue.", destinationDir);
+		for (MediaQueue.MediaList mediaList : mQ) {
+			logger.trace("Processing Media objects within media list \"{}\".", mediaList.toString());
+			for (Media mediaObj : mediaList) {
+				Path newFilePath;
+				logger.trace("Processing {} object \"{}\".", mediaObj.getClass().getName(), mediaObj.getCustomFilename());
+
+				newFilePath = mediaObj.generateCustomPathStructure(destinationDir.toPath());
+
+				wrapper = new MediaIOWrapper(mediaObj, mediaObj.getFile().toPath(), newFilePath);
+				try {
+					File tmp;
+					{
+						Files.createDirectories(wrapper.to.getParent());
+						logger.trace("Created/verified directories exist at \"{}\".", wrapper.to.getParent());
+
+						wrapper.setOperationSuccess((tmp = 					safeNonAtomicMove(wrapper, wrapper.to)).exists());
+					}
+
+
+					if (wrapper.didOperationSucceed() && tmp.isFile()) {
+						wrapper.media.setFile(tmp);
+						logger.info("Successfully moved \"{}\" to \"{}\".", wrapper.media.getCustomFilename(), wrapper.to);
+					} else {
+						logger.error("Copy-paste-delete operation was not fully successful.");
+					}
+				} catch (IOException e) {
+					wrapper.setOperationSuccess(false);
+
+					logger.error(
+							"An IO exception was thrown while attempting to move a {} file from \"{}\" to \"{}\".",
+							wrapper.media.getType(),
+							wrapper.media.getFile().getAbsolutePath(),
+							wrapper.to
+					);
+					logger.error(e.toString());
+					e.printStackTrace();
+				}
+
+			}
+
+		}
+
+	}
+
+	private File safeNonAtomicMove(MediaIOWrapper wrapper, Path newFilePath) {
 		logger.debug(
 				"Attempting safe move operation on {} object {} (from = \"{}\", to = \"{}\").",
 				wrapper.media.getClass().getSimpleName(),
@@ -106,8 +150,7 @@ public class Operations{
 
 				removeSourceFilePostMove(wrapper);
 			}
-			wrapper.from.toFile();
-
+			return wrapper.to.toFile();
 		} catch (FileAlreadyExistsException e) {
 			logger.error(
 					"Media copy operation failed; there is already a file in the target destination (target = {}).",
@@ -132,8 +175,8 @@ public class Operations{
 			logger.error(e.toString());
 			e.printStackTrace();
 		}
+		return new File("");
 	}
-
 
 	/**
 	 * Initiates a copy operation using the Java NIO package's Files class. Using the MediaIOWrapper class, it will validate a checksum for the
@@ -211,6 +254,20 @@ public class Operations{
 	}
 
 
+	public enum FileOperation {
+
+		MOVE_FILE_ATOMICALLY, COPY_FILE_AND_DELETE_SRC;
+
+		public static String[] toStringArray() {
+			String[] strings = new String[values().length];
+			FileOperation[] values = values();
+			for (int i = 0; i < values.length; i++) {
+				FileOperation fop = values[i];
+				strings[i] = fop.toString().replace('_', ' ');
+			}
+			return strings;
+		}
+	}
 
 	private static class MediaIOWrapper {
 		private final Media media;

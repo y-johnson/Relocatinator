@@ -1,8 +1,6 @@
 package general;
 
-import media.Media;
 import media.MediaQueue;
-import yjohnson.Operations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yjohnson.ConsoleEvent;
@@ -11,7 +9,7 @@ import java.io.File;
 import java.util.Date;
 
 public class Main {
-
+	
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
 	public static String APP_NAME;
 	public static String VERSION;
@@ -27,28 +25,8 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		CLI.printHeader();
-		queue = CLI.createMediaQueueCLI(queue);
-		String overview = "Overview of Operations: ";
+		CLI.run();
 
-		String sb = overview + queue.stringOfContents();
-		ConsoleEvent.print(sb);
-
-		if (ConsoleEvent.askUserForBoolean("Confirm?")) {
-			Operations op = new Operations();
-
-			ConsoleEvent.print("Starting media queue move operation.");
-			File target;
-			boolean validDest;
-			do {
-				target = new File(ConsoleEvent.askUserForString("Input the destination directory"));
-				validDest = target.isAbsolute();
-				if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
-			} while (!validDest);
-			op.organizedMove(queue, target);
-		}
-
-		ConsoleEvent.print("Move finalized!");
 	}
 
 
