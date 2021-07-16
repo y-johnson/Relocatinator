@@ -18,8 +18,8 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 	 * Constructs a LinkedList queue for MediaList objects, which in turn stores Media objects to process together. The resulting MediaQueue object is
 	 * iterable at the MediaList level but is meant to be the "accessible" data structure.
 	 * <p>
-	 * The constructor will use the src and ext parameters to do a recursive file search within the src directory. It will store the paths of all files
-	 * that have the given extension.
+	 * The constructor will use the src and ext parameters to do a recursive file search within the src directory. It will store the paths of all
+	 * files that have the given extension.
 	 *
 	 * @param src  the source directory to search within
 	 * @param ext  the extension to filter by
@@ -63,7 +63,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 			sb.append(m.toString()).append("\n");
 			for (Media item : m) {
 				sb.append(item.getFile().getName()).append("\n");
-				sb.append(" -> ").append(item.getCustomName()).append("\n");
+				sb.append(" -> ").append(item.getCustomFilename()).append("\n");
 			}
 		}
 		return sb.toString();
@@ -82,7 +82,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 		return queue.iterator();
 	}
 
-	public class MediaList implements Iterable<Media> {
+	public static class MediaList implements Iterable<Media> {
 		//		private static final Logger logger = LoggerFactory.getLogger(MediaList.class);
 		private final Path dir;
 		private final String ext;
@@ -90,9 +90,9 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 		private String name;
 
 		/**
-		 * Data structure to be used by MediaQueue in order to allow additional queueing with less complications.
-		 * Retrieves a list of files whose extension matches the given argument to process them as Media.class subtypes.
-		 * It will then don the name that corresponds to the majority of files within the list.
+		 * Data structure to be used by MediaQueue in order to allow additional queueing with less complications. Retrieves a list of files whose
+		 * extension matches the given argument to process them as Media.class subtypes. It will then don the name that corresponds to the majority of
+		 * files within the list.
 		 *
 		 * @param dir  the directory to search within.
 		 * @param ext  the extension to filter by.
@@ -130,34 +130,26 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 		}
 
 		/**
-		 * Counts the recurrence of a name throughout the files added to this MediaList. The roundup is stored in the
-		 * given HashMap. Handles new as well as repeating additions.
+		 * Counts the recurrence of a name throughout the files added to this MediaList. The roundup is stored in the given HashMap. Handles new as
+		 * well as repeating additions.
+		 *
 		 * @param listNames hashmap to store results in.
-		 * @param m the media object to tally.
+		 * @param m         the media object to tally.
 		 */
 		private void tallyNames(HashMap<String, Integer> listNames, Media m) {
 			if (m.isValid()) {
-				switch (m.getType()) {
-					case TV:
-						if (!listNames.containsKey(((TV) m).getSeriesName())) {
-							logger.trace("Adding {} (type = {}) into list name roundup.");
-							listNames.put(((TV) m).getSeriesName(), 1);
-						} else {
-							listNames.replace(((TV) m).getSeriesName(), listNames.get(((TV) m).getSeriesName()) + 1);
-						}
-						break;
-					case MOVIE:
-						if (!listNames.containsKey(((Movie) m).getMovieName())) {
-							listNames.put(((Movie) m).getMovieName(), 1);
-						} else {
-							listNames.replace(((Movie) m).getMovieName(), listNames.get(((Movie) m).getMovieName()) + 1);
-						}
-						break;
+				var title = m.getMediaTitle();
+				if (!listNames.containsKey(title)) {
+					logger.trace("Introducing {} (from \"{}\") into list name roundup.", title, m.getCustomFilename());
+					listNames.put(title, 1);
+				} else {
+					logger.trace("Adding +1 to {} (from \"{}\").", title, m.getCustomFilename());
+					listNames.replace(title, listNames.get(title) + 1);
 				}
 			} else {
 				logger.error(
 						"Generated media file \"{}\" is incomplete or invalid. One of its values may have not been properly processed.",
-						m.getCustomName()
+						m.getCustomFilename()
 				);
 			}
 		}

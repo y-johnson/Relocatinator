@@ -8,16 +8,15 @@ import java.util.regex.Pattern;
 
 public class MetadataOps {
 
-	private static final Logger logger = LoggerFactory.getLogger(MetadataOps.class);
 	protected static final String[] unwantedSpaces = {".", "_"};
 	protected static final String[] unwantedBrackets = {"[", "]", "(", ")"};
-	static final int MAX_NUMBER_OF_SEASONS = 15;            // Used as a max to find the season number.
-	static final int MAX_NUMBER_OF_EPISODES = 300;          // Used as a max to find the episode number.
-
+	protected static final String RES_UNKNOWN = "Unknown";
+	protected static final String EPISODE_UNKNOWN = "Special";
+	protected static final int MAX_NUMBER_OF_SEASONS = 15;            // Used as a max to find the season number.
+	protected static final int MAX_NUMBER_OF_EPISODES = 300;          // Used as a max to find the episode number.
+	private static final Logger logger = LoggerFactory.getLogger(MetadataOps.class);
 	private static final String RESOLUTION = "Resolution";
 	private static final String[] resRegex;
-
-	public static final String RES_UNKNOWN = "Unknown";
 
 	static {
 		resRegex = new String[]{
@@ -28,16 +27,17 @@ public class MetadataOps {
 	}
 
 	/**
-	 * Method designed to verify whether or not a known resolution appears within the given string.
-	 * The implementation is not currently capable of parsing data from media; it only does so from their name.
-	 *
+	 * Method designed to verify whether or not a known resolution appears within the given string. The implementation is not currently capable of
+	 * parsing data from media; it only does so from their name.
+	 * <p>
 	 * Future implementations would benefit from ffmpeg's ffprobe functionality. A wrapper for it can be found here:
 	 * https://github.com/bramp/ffmpeg-cli-wrapper
 	 *
 	 * @param fn the name of a file or directory.
+	 *
 	 * @return the resolution that was found within the given string.
 	 */
-	public static String getResolution (String fn) {
+	public static String getResolution(String fn) {
 		logger.debug("Attempting to parse resolution from string \"{}\"", fn);
 		for (String resolution : resRegex) {
 			logger.trace("Matching \"{}\" against \"{}\".", resolution, fn);

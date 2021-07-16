@@ -4,16 +4,58 @@ import media.MediaQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yjohnson.ConsoleEvent;
+import yjohnson.Operations;
 
 import java.io.File;
+import java.util.Arrays;
 
 import static general.Main.APP_NAME;
 import static general.Main.VERSION;
 
 public class CLI {
 	private static final Logger logger = LoggerFactory.getLogger(CLI.class);
+	private static MediaQueue queue;
 
-	static void printHeader () {
+	static void run() {
+		CLI.printHeader();
+		queue = CLI.createMediaQueueCLI(queue);
+
+		ConsoleEvent.print("Overview of Operations: " + queue.stringOfContents());
+
+		if (ConsoleEvent.askUserForBoolean("Confirm?")) {
+			Operations.FileOperation fo = Operations.FileOperation.values()[ConsoleEvent.askUserForOption(
+					"Choose an operation",
+					Arrays.asList(Operations.FileOperation.toStringArray())
+			) - 1];
+
+			Operations op = new Operations();
+
+			ConsoleEvent.print("Starting media queue move operation.");
+			File target;
+			boolean validDest;
+			do {
+				target = new File(ConsoleEvent.askUserForString("Input the destination directory"));
+				validDest = target.isAbsolute();
+				if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
+			} while (!validDest);
+
+			switch (fo) {
+				case MOVE_FILE_ATOMICALLY:
+					op.ioStandardMoveRunner(queue, target);
+					ConsoleEvent.print("Move finalized!");
+					break;
+				case COPY_FILE_AND_DELETE_SRC:
+					op.ioNonAtomicMoveRunner(queue, target);
+					break;
+				default:
+					logger.error("Operation {} not implemented!", fo);
+			}
+
+		}
+
+	}
+
+	static void printHeader() {
 		logger.info("Starting {}.", APP_NAME);
 		/* Intro for user */
 		StringBuilder sb = new StringBuilder();
@@ -25,7 +67,7 @@ public class CLI {
 		ConsoleEvent.print(sb.toString());
 	}
 
-	static MediaQueue createMediaQueueCLI (MediaQueue queue) {
+	static MediaQueue createMediaQueueCLI(MediaQueue queue) {
 		logger.debug("CLI is creating media queue.");
 		File src;
 		String ext;
@@ -49,6 +91,5 @@ public class CLI {
 		} while (ConsoleEvent.askUserForBoolean("Add more files to the queue?"));
 		return queue;
 	}
-
 
 }

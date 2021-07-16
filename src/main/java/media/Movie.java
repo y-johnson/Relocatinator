@@ -1,5 +1,10 @@
 package media;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.LinkedList;
 
@@ -7,6 +12,8 @@ import static media.MetadataOps.unwantedBrackets;
 import static media.MetadataOps.unwantedSpaces;
 
 public class Movie extends Media {
+	private static final Logger logger = LoggerFactory.getLogger(Movie.class);
+
 	private static final int MOVIE_EARLIEST_YEAR = 1900;
 	private static final LinkedList<Integer> MOVIE_VALID_YEARS;
 
@@ -51,6 +58,34 @@ public class Movie extends Media {
 	}
 
 	/**
+	 * Returns a string representation of this media object's customized file path as a child of the given path. No checks are performed to determine
+	 * whether a file already exists at that location.
+	 *
+	 * @param path path to attach this custom file path to.
+	 *
+	 * @return the absolute path of this media's customized path structure.
+	 */
+	@Override
+	public Path generateCustomPathStructure(Path path) {
+		Path generated = new File(
+				path +
+						(path.toString().endsWith(File.separator) ? "" : String.valueOf(File.separatorChar)) +
+						this.getMediaTitle() +
+						File.separatorChar +
+						this.getCustomFilename() +
+						this.getExt()
+		).toPath();
+
+		logger.trace(
+				"Generated path for TV object \"{}\" (given parent path = \"{}\", generated = \"{}\".",
+				this.getCustomFilename(),
+				path,
+				generated
+		);
+
+		return generated.toAbsolutePath();
+	}
+	/**
 	 * Extracts relevant information out of the name of the file. This includes the
 	 * name of the show, the season the file corresponds to, and the episode number.
 	 */
@@ -81,6 +116,11 @@ public class Movie extends Media {
 		} else {
 			this.customName = movieName;
 		}
+	}
+
+	@Override
+	public String getMediaTitle () {
+		return this.movieName;
 	}
 
 	@Override

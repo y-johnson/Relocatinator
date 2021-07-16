@@ -1,8 +1,212 @@
 # Changelog
 
+### 7/14/2021 12:05
+
+#### Implemented copy-paste-delete operation
+
+* This operation is the safe, non-atomic move operation implemented beforehand, but can now be invoked explicitly.
+* A sizeable amount of refactoring has been done to accommodate the changes, including name changes that are more
+  descriptive.
+
+#### Known bugs
+
+* Due to priority being in the `TV` class, `Movie` is not receiving any development support at this time and therefore *
+  may* be broken.
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+* There is a hard-to-reproduce bug that occurs when starting a `java.nio.Files` operation such as `move()` or `copy()`
+  where the method may throw a `NoSuchFileException` regardless of whether the file is present. Furthermore, it may
+  occur on only some files within a directory but not others.
+	* This may be related with files being in different partitions or drives.
+
+#### Priorities
+
+1. Semi-automated testing with JUnit.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> **Future:*** Consider using other algorithms to speed up execution.
+> > Using `String.contains()` and other string methods is not very optimal, but it is done repeatedly in the program. A possible improvement would be the [Boyer–Moore string-search algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm#Implementations).
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
+### 7/6/2021 9:54
+
+#### Adjusted `organizedMove()`
+
+* The method withing the class are now non-static, and it has a constructor.
+	* This class will change in the future with the potential of separating operations into subclasses if the class gets
+	  large enough.
+	* `Main` has been adjusted accordingly.
+* The `java.nio.Files` methods throw `NoSuchFileException`s when the parent directory of its target path are not
+  created. By adding a `Files.createDirectories()` invocation on the path's parent, this issue has been resolved.
+
+### 7/5/2021 22:20
+
+#### Reimplemented `java.nio.Files.move()`
+
+* After reading some documentation, the `NIO` package does provide operation safety with the `ATOMIC_MOVE` option.
+* It has been reinstated, with a fallback to the `safeNonAtomicMove()` method upon receiving an I/O exception.
+
+#### General
+
+* Moved `String SPECIAL` of `TV` into `MetadataOps`
+	* Namely, the unknown episode/special string.
+
+* Minor refactoring.
+
+#### Known bugs
+
+* Due to priority being in the `TV` class, `Movie` is not receiving any development support at this time and therefore *
+  may* be broken.
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+* There is a hard-to-reproduce bug that occurs when starting a `java.nio.Files` operation such as `move()` or `copy()`
+  where the method may throw a `NoSuchFileException` regardless of whether the file is present. Furthermore, it may
+  occur on only some files within a directory but not others.
+	* This may be related with files being in different partitions or drives.
+
+#### Priorities
+
+1. Semi-automated testing with JUnit.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> **Future:*** Consider using other algorithms to speed up execution.
+> > Using `String.contains()` and other string methods is not very optimal, but it is done repeatedly in the program. A possible improvement would be the [Boyer–Moore string-search algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm#Implementations).
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
+### 7/5/2021 18:53
+
+#### Implemented file checksum validation
+
+* This resides in `yjohnson/Checksum` and is hardcoded to use `MD5`.
+* This class has been designed to "provide support" to file operations by adding checksum validation.
+* Credit for large parts of this code go
+  to [Réal Gagnon @ Real's How-to](https://www.rgagnon.com/javadetails/java-0416.html).
+
+#### Expanded functionality in `Operations`
+
+* New subclass: `MediaIOWrapper`.
+	* It is meant to be a wrapper for `Media` objects that must undertake a move operation, providing a simpler way to
+	  pass along, track, and store `Path` information.
+* The method `moveMedia()` has been changed to `copyMedia()`.
+	* The method has been explicitly designed to do copy operations only.
+		* This allows an intermediate step to occur between moving files: checksum validation.
+	* The highlight of this method is the ability to use the `Checksum` class to verify that files are equivalent.
+	  > Because operations may take a long time, it is of utmost importance that the user's files are preserved throughout runtime. If the target directory is suddenly not reachable, full, or otherwise impaired, then the operation "fails" without compromising the user's files.
+
+* Functionality has been abstracted from `organizedMove()`.
+
+	* It now does a copy operation first and *then* deletes the source file, assuming the former succeeded.
+		* This quite literally cripples per-file performance and doubles space complexity for the sake of safety, but I
+		  may look into developing an "
+		  unsafe" alternative in the future.
+	* Source file deletion post-move is handled by `removeSourceFilePostMove()`.
+	* `Media` path generation has been moved to the `Media` subclasses with a method
+	  named `generateCustomPathStructure()`.
+
+#### `Media` & `MediaQueue`
+
+* Various method names have been changed to be more clear about their usage.
+* `getMediaTitle()` retrieves the media's proper title or name.
+	* For the currently implemented classes, they imply:
+		- `TV` - The series' name (*not* the episode's name)
+		- `Movie` - The movie's name
+	* This was added, in part, to improve `MediaQueue.tallyNames()`.
+
+* `generateCustomPathStructure()` takes in a `Path` parameter and returns what the specific `Media` subclass would "
+  want" their file structure to be under the given parent path.
+
+#### Known bugs
+
+* Due to priority resting in the `TV` class, `Movie` is not receiving any development support at this time and
+  therefore *may* be broken.
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+#### Priorities
+
+1. Semi-automated testing with JUnit.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> **Future:*** Consider using other algorithms to speed up execution.
+> > Using `String.contains()` and other string methods is not very optimal, but it is done repeatedly in the program. A possible improvement would be the [Boyer–Moore string-search algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm#Implementations).
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
 ### 7/5/2021 14:20
 
 #### Slight changes
+
 * Some minor refactoring.
 
 ### 7/2/2021 15:31
@@ -166,7 +370,7 @@
 
 * The `seasons()` method of the `TV` class does not accurately parse season information from the file's name if the
   season is larger than 9. It is possible that it reads the first number and believes it is done, thereby ignoring the
-  second digit and misrepresenting the output season. This can lead to the program overwriting it's own output and even
+  second digit and misrepresenting the output season. This can lead to the program overwriting its own output and even
   data loss.
   ![image](https://user-images.githubusercontent.com/62960501/124062581-8ca8ff80-d9f6-11eb-837b-08bb0020fd21.png)
 
