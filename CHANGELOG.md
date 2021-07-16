@@ -1,5 +1,64 @@
 # Changelog
 
+### 7/16/2021 15:39
+
+#### Improvements to `Movie`
+
+* This class has been largely overhauled to adopt a similar construction to `TV`.
+
+* Release year parsing now utilizes regular expressions.
+	* It is hardcoded to search for numbers in between `1800` and `2[century][decade]9`, where the middle two are
+	  bounded by the current year.
+		* This may pose a problem with names that contain a number such as this; user discretion is advised.
+
+* Logging has been added to various methods.
+
+#### `TV` Abstraction
+
+* `MetadataOps` now houses `removeUnwantedSpaces()` and `removeBrackets` (originally found in `TV`).
+	* `removeBrackets` can now remove leading or trailing brackets that do not have a counterpart, replacing them with
+	  an empty space character.
+
+#### Known bugs
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+#### Priorities
+
+1. Semi-automated testing with JUnit.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> ***Future:*** Add support for moving subtitles that have the same name.
+> 
+> ***Future:*** Consider using other algorithms to speed up execution.
+> > Using `String.contains()` and other string methods is not very optimal, but it is done repeatedly in the program. A possible improvement would be the [Boyer–Moore string-search algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm#Implementations).
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+
 ### 7/14/2021 12:05
 
 #### Implemented copy-paste-delete operation

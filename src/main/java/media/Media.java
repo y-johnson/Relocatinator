@@ -3,6 +3,8 @@ package media;
 import java.io.File;
 import java.nio.file.Path;
 
+import static media.MetadataOps.unwantedSpaces;
+
 abstract public class Media {
 	protected File file;
 	protected String customName, resolution = "Unknown";
@@ -56,7 +58,7 @@ abstract public class Media {
 	}
 
 	/**
-	 * Returns the deduced name of the work that this media object represents. For TV shhows, this would be the series' name, whereas for movies, it
+	 * Returns the deduced name of the work that this media object represents. For TV shows, this would be the series' name, whereas for movies, it
 	 * would be the movie's title.
 	 *
 	 * @return the deduced title of this media object.

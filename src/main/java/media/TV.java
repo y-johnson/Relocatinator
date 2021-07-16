@@ -8,12 +8,15 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static media.MetadataOps.unwantedBrackets;
-import static media.MetadataOps.unwantedSpaces;
-
 public class TV extends Media {
 
 	private static final Logger logger = LoggerFactory.getLogger(TV.class);
+
+	private String seriesName;
+	private int seasonNumber = 1;
+	private int episodeNumber;
+
+	/* Patterns */
 	private static final Pattern[] regexSeasonAndEp = {
 			Pattern.compile("(?i)(?: *- ?)? ?(?<seasonInd>S(?<season>0*[1-9][0-9]*|0)) *(?<epInd>E(?<episode>0*([1-9][0-9]*|0)))"),
 			Pattern.compile(
@@ -32,9 +35,6 @@ public class TV extends Media {
 			Pattern.compile("(?i)(?<seasonInd>Season ?\\b(?<season>0*([1-9][0-9]*|0)))"),
 			Pattern.compile("(?i)(?<seasonInd>S(?<season>0*([1-9][0-9]*|0))) +"),
 			};
-	protected String seriesName;
-	private int seasonNumber = 1;
-	private int episodeNumber;
 
 	/**
 	 * Creates a TV object, a subclass of Media, that functions the same as a File with added functionality, such as metadata storage and references
@@ -58,7 +58,7 @@ public class TV extends Media {
 
 		parseTVInfo();
 
-		this.seriesName = removeBrackets(this.seriesName);
+		this.seriesName = MetadataOps.removeBrackets(this.seriesName);
 
 		if (this.episodeNumber >= 0) {
 			this.customName = seriesName.trim() + String.format(" - S%02dE%02d", this.seasonNumber, this.episodeNumber);
@@ -69,10 +69,10 @@ public class TV extends Media {
 
 	private void parseTVInfo() {
 		boolean foundEp = false, foundSeas = false;
-		logger.info("Parsing TV information for \"{}\"", this.getFile().getName());
-		String fn = removeUnwantedSpaces(this.getFile().getName().substring(0, this.getFile().getName().lastIndexOf('.')));
+		logger.info("Parsing TV information for \"{}\".", this.getFile().getName());
+		String fn = MetadataOps.removeUnwantedSpaces(this.getFile().getName().substring(0, this.getFile().getName().lastIndexOf('.')));
 		logger.trace(
-				"Proposed file name (before parse) \"{}\" -> \"{}\"",
+				"Proposed file name (before parse) \"{}\" -> \"{}\".",
 				this.getFile().getName().substring(0, this.getFile().getName().lastIndexOf('.')),
 				fn
 		);
@@ -90,20 +90,6 @@ public class TV extends Media {
 				} else {
 					logger.trace("Pattern \"{}\" could NOT match \"season\" group.", p);
 					// TODO: put extra season parsing in here, maybe
-//					String newFn = matchSeasonOnly(fn);
-//					if (!fn.equals(newFn)) {
-//
-//						fn = newFn;
-//						foundSeas = true;
-//					} else {
-//						// Look in file's immediate parent directory
-//						String parentDir = removeUnwantedSpaces(this.file.getParentFile().getName());
-//						newFn = matchSeasonOnly(parentDir);
-//						if (!parentDir.equals(newFn)) { // If the return value is not equal to the original, the season number was identified
-//							// fn stays the same
-//							foundSeas = true;
-//						}
-//					}
 				}
 
 				// Episode
@@ -159,7 +145,7 @@ public class TV extends Media {
 						"Could not parse season information from file's name; parsing parent directory \"{}\" for season information.",
 						rawParentDir
 				);
-				String parentDir = removeUnwantedSpaces(rawParentDir);
+				String parentDir = MetadataOps.removeUnwantedSpaces(rawParentDir);
 				// Look in file's immediate parent directory
 				newFn = matchSeasonOnly(parentDir);
 				if (!parentDir.equals(newFn)) { // If the return value is not equal to the original, the season number was identified
@@ -172,44 +158,6 @@ public class TV extends Media {
 			logger.debug("No regular expression pattern match against \"{}\", defaulting to legacy code.", fn);
 			this.seriesName = episodes(seasons()).trim();
 		} else this.seriesName = fn;
-	}
-
-	private static String removeBrackets(String seriesName) {
-		if (seriesName == null) return "";
-		logger.debug("Removing brackets from string \"{}\".", seriesName);
-		for (int bracketArrIdx = 0; bracketArrIdx < unwantedBrackets.length - 1; bracketArrIdx += 2) {
-			String leadingBracket = unwantedBrackets[bracketArrIdx];
-			logger.trace("Searching for instances of '{}' within \"{}\".", leadingBracket, seriesName);
-			while (seriesName.contains(String.valueOf(leadingBracket))) {
-				int idx1 = 0, idx2 = 0;
-				char[] snCharArr = seriesName.toCharArray();
-				for (int snIdx = 0; (snIdx < snCharArr.length) && !(idx1 < idx2); snIdx++) {                // O(n)
-					char c = snCharArr[snIdx];
-					if (c == leadingBracket.charAt(0)) {
-						logger.trace("Found '{}' within \"{}\" at index {}", leadingBracket, seriesName, snIdx);
-						idx1 = snIdx;
-					} else {
-						String trailingBracket = unwantedBrackets[bracketArrIdx + 1];
-						if (c == trailingBracket.charAt(0)) {
-							logger.trace("Found '{}' within \"{}\" at index {}", trailingBracket, seriesName, snIdx);
-							idx2 = snIdx;
-						}
-					}
-				}
-				if (idx1 < idx2) {
-					logger.debug("Removing substring \"{}\" from series name \"{}\".", seriesName.substring(idx1, idx2 + 1), seriesName);
-					seriesName = seriesName.replace(seriesName.substring(idx1, idx2 + 1), "");
-				}
-			}
-		}
-		return seriesName;
-	}
-
-	private String removeUnwantedSpaces(String s) {
-		for (String e : unwantedSpaces) {
-			if (s.contains(e)) s = s.replace(e, " ").trim();
-		}
-		return s;
 	}
 
 	private String matchEpisodeOnly(String fn) {
@@ -329,7 +277,7 @@ public class TV extends Media {
 		logger.debug("Parsing season information for {} object \"{}\".", this.getClass().getName(), this.getFile().getName());
 		String[] templates;
 		String filename = this.getFile().getName();
-		String fn = removeUnwantedSpaces(filename.substring(0, filename.lastIndexOf('.')));
+		String fn = MetadataOps.removeUnwantedSpaces(filename.substring(0, filename.lastIndexOf('.')));
 		for (int i = 1; i < MetadataOps.MAX_NUMBER_OF_SEASONS; ++i) {
 			templates = new String[]{
 					"SEASON " + i,
