@@ -6,55 +6,107 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Calendar;
-import java.util.LinkedList;
-
-import static media.MetadataOps.unwantedBrackets;
-import static media.MetadataOps.unwantedSpaces;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Movie extends Media {
 	private static final Logger logger = LoggerFactory.getLogger(Movie.class);
 
-	private static final int MOVIE_EARLIEST_YEAR = 1900;
-	private static final LinkedList<Integer> MOVIE_VALID_YEARS;
+	private static final int UNKNOWN_RELEASE_YEAR = -1;
+	private static final char[] OS_YEAR = String.valueOf(Calendar.getInstance().get(Calendar.YEAR)).trim().toCharArray();
+	private static final Pattern regexReleaseYear = Pattern.compile(
+			"\\b(?<year>1[8-9][0-9][0-9]|2[0-" + OS_YEAR[1] + "][0-" + OS_YEAR[2] + "][0-9])\\b");
 
-	static {
-		MOVIE_VALID_YEARS = new LinkedList<>();
-
-		for (int i = MOVIE_EARLIEST_YEAR; i <= Calendar.getInstance().get(Calendar.YEAR); ++i) {
-			MOVIE_VALID_YEARS.add(i);
-		}
-	}
 
 	private int releaseYear = 0;
 	private String movieName;
 
 	/**
-	 * A superclass that serves as an intermediary between the File and respective media-related subclasses.
-	 * Stores the metadata of the files.
+	 * A superclass that serves as an intermediary between the File and respective media-related subclasses. Stores the metadata of the files.
 	 *
 	 * @param path the path to the Media file
 	 */
-	public Movie (String path) {
+	public Movie(String path) {
 		super(path, MediaType.MOVIE);
-		extractTitleInfo();
+		this.extractTitleInfo();
+		logger.info("Created \"{}\" ({}) from source file \"{}\"", this.getCustomFilename(), this.getClass().getName(), this.getFile().getName());
 	}
 
-	public int getReleaseYear () {
-		return releaseYear;
-	}
+	/**
+	 * Extracts relevant information out of the name of the file. This includes the name of the show, the season the file corresponds to, and the
+	 * episode number.
+	 */
+	public void extractTitleInfo() {
+		logger.info("Parsing Movie information for \"{}\".", this.getFile().getName());
 
-	public String getMovieName () {
-		return movieName;
-	}
+		this.resolution = MetadataOps.getResolution(this.file.getName());
+		parseReleaseYear();
 
-	private int findReleaseYear () {
-		for (Integer i : MOVIE_VALID_YEARS) {
-			if (this.file.getName().contains(i.toString())) {
-				return i;
-			}
+		if (this.releaseYear == UNKNOWN_RELEASE_YEAR) {
+			String name = MetadataOps
+					.removeUnwantedSpaces(
+							MetadataOps.removeBrackets(
+									this.file.getName()
+									         .substring(0, this.file.getName().lastIndexOf('.'))
+							)
+					).trim();
+			this.movieName = this.customName = name;
+		} else {
+			String name = MetadataOps
+					.removeUnwantedSpaces(
+							MetadataOps.removeBrackets(
+									this.file.getName()
+									         .substring(0, this.file.getName().lastIndexOf(Integer.toString(this.releaseYear)))))
+					.trim();
+			this.movieName = name;
+			this.customName = name + " (" + releaseYear + ")";
 		}
 
+		logger.debug(
+				"Parsed movie name as \"{}\" with release year of {} (src = \"{}\").",
+				this.movieName,
+				this.releaseYear,
+				this.getFile().getName()
+		);
+		logger.trace(
+				"Proposed custom name \"{}\" --> \"{}\"",
+				this.getFile().getName().substring(0, this.getFile().getName().lastIndexOf('.')),
+				this.customName
+		);
+	}
+
+	private void parseReleaseYear() {
+		String fileName = this.file.getName();
+		logger.debug("Retrieving movie release year from file name (filename = \"{}\").", fileName);
+		logger.trace("Valid movie release year range: 1800 - {}.", Calendar.getInstance().get(Calendar.YEAR) + 1);
+		Matcher matcher = regexReleaseYear.matcher(fileName);
+		if (matcher.find() && matcher.group("year") != null) {
+			logger.debug("Release year pattern matched against file \"{}\" with a result of {}.", fileName, matcher.group("year"));
+			this.releaseYear = Integer.parseInt(matcher.group("year"));
+		} else {
+			String parentDir = this.file.getParentFile().getName();
+			logger.warn("File name did not match a release year. Attempting to match parent directory (dir = \"{}\").", parentDir);
+			matcher = regexReleaseYear.matcher(parentDir);
+			if (matcher.find() && matcher.group("year") != null) {
+				logger.debug("Release year pattern matched against parent directory \"{}\" with a result of {}.", parentDir, matcher.group("year"));
+				this.releaseYear = Integer.parseInt(matcher.group("year"));
+			} else {
+				logger.warn(
+						"Parent directory name did not match a release year. Setting \"Unknown\" value '{}' to release year (dir = \"{}\").",
+						UNKNOWN_RELEASE_YEAR,
+						parentDir
+				);
+				this.releaseYear = UNKNOWN_RELEASE_YEAR;
+			}
+		}
+	}
+
+	public int getReleaseYear() {
 		return releaseYear;
+	}
+
+	public String getMovieName() {
+		return movieName;
 	}
 
 	/**
@@ -85,46 +137,14 @@ public class Movie extends Media {
 
 		return generated.toAbsolutePath();
 	}
-	/**
-	 * Extracts relevant information out of the name of the file. This includes the
-	 * name of the show, the season the file corresponds to, and the episode number.
-	 */
-	public void extractTitleInfo () {
-		this.movieName = this.file.getName().substring(0, this.file.getName().lastIndexOf('.')).trim();
-
-		this.resolution = MetadataOps.getResolution(this.file.getName());
-		this.releaseYear = findReleaseYear();
-
-		for (String e : unwantedSpaces) {
-			if (this.movieName.contains(e)) this.movieName = this.movieName.replace(e, " ").trim();
-		}
-
-		boolean brackets = true;
-		for (int i = 0; i < unwantedBrackets.length - 1; i = i + 2) {
-			do {
-				if (this.movieName.contains(unwantedBrackets[i]) && this.movieName.contains(unwantedBrackets[i + 1])) {
-					String toRemove = this.movieName.substring(this.movieName.indexOf(unwantedBrackets[i]), this.movieName.indexOf(unwantedBrackets[i + 1]) + 1);
-					this.movieName = this.movieName.replace(toRemove, "").trim();
-				} else {
-					brackets = false;
-				}
-			} while (brackets);
-		}
-		if (this.releaseYear > MOVIE_EARLIEST_YEAR && this.movieName.contains(Integer.toString(this.releaseYear))) {
-			this.movieName = this.movieName.substring(0, this.movieName.indexOf(Integer.toString(this.releaseYear))).trim();
-			this.customName = movieName + String.format(" (%4d)", this.releaseYear);
-		} else {
-			this.customName = movieName;
-		}
-	}
 
 	@Override
-	public String getMediaTitle () {
+	public String getMediaTitle() {
 		return this.movieName;
 	}
 
 	@Override
-	public boolean isValid () {
+	public boolean isValid() {
 		/* If the file exists and both the movie name and custom name exist, then it is a valid Movie object */
 		return this.getFile().isFile() && !this.movieName.isEmpty() && !this.customName.isEmpty();
 	}
