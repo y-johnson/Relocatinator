@@ -14,10 +14,27 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 public class Operations {
 	private static final Logger logger = LoggerFactory.getLogger(Operations.class);
 
-	public Operations() {
+	private final FileOperation selectedOp;
+	private final MediaQueue mediaQueue;
+	private final File destinationDir;
+	public Operations(FileOperation fOp, MediaQueue mQ, File destinationDir) {
+		this.selectedOp = fOp;
+		this.mediaQueue = mQ;
+		this.destinationDir = destinationDir;
 	}
 
-	public void ioStandardMoveRunner(MediaQueue mQ, File destinationDir) {
+	public void executeFileOperation(){
+		switch (selectedOp) {
+			case MOVE_FILE_ATOMICALLY:
+				ioStandardMoveRunner(mediaQueue, destinationDir);
+				break;
+			case COPY_FILE_AND_DELETE_SRC:
+				ioNonAtomicMoveRunner(mediaQueue,destinationDir);
+			default:
+				logger.error("Operation {} not implemented!", selectedOp);
+		}
+	}
+	private void ioStandardMoveRunner(MediaQueue mQ, File destinationDir) {
 		MediaIOWrapper wrapper;
 
 		logger.info("Starting organized move operation into \"{}\" for given media queue.", destinationDir);
@@ -43,6 +60,7 @@ public class Operations {
 						logger.trace("Created/verified directories exist at \"{}\".", wrapper.to.getParent());
 
 						wrapper.setOperationSuccess((tmp = Files.move(wrapper.from.toAbsolutePath(), wrapper.to, ATOMIC_MOVE).toFile()).exists());
+						logger.trace("'Java NIO Atomic Move' file operation returned 'success = {}'", wrapper.didOperationSucceed());
 					}
 
 					if (wrapper.didOperationSucceed() && tmp.isFile()) {
@@ -82,7 +100,7 @@ public class Operations {
 		}
 
 	}
-	public void ioNonAtomicMoveRunner(MediaQueue mQ, File destinationDir) {
+	private void ioNonAtomicMoveRunner(MediaQueue mQ, File destinationDir) {
 		MediaIOWrapper wrapper;
 
 		logger.info("Starting safe move operation into \"{}\" for given media queue.", destinationDir);
@@ -253,21 +271,6 @@ public class Operations {
 		}
 	}
 
-
-	public enum FileOperation {
-
-		MOVE_FILE_ATOMICALLY, COPY_FILE_AND_DELETE_SRC;
-
-		public static String[] toStringArray() {
-			String[] strings = new String[values().length];
-			FileOperation[] values = values();
-			for (int i = 0; i < values.length; i++) {
-				FileOperation fop = values[i];
-				strings[i] = fop.toString().replace('_', ' ');
-			}
-			return strings;
-		}
-	}
 
 	private static class MediaIOWrapper {
 		private final Media media;

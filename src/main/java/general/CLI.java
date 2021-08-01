@@ -4,6 +4,7 @@ import media.MediaQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yjohnson.ConsoleEvent;
+import yjohnson.FileOperation;
 import yjohnson.Operations;
 
 import java.io.File;
@@ -20,15 +21,14 @@ public class CLI {
 		CLI.printHeader();
 		queue = CLI.createMediaQueueCLI(queue);
 
-		ConsoleEvent.print("Overview of Operations: " + queue.stringOfContents());
+		ConsoleEvent.print("Overview of Operations: " + queue.toString());
 
 		if (ConsoleEvent.askUserForBoolean("Confirm?")) {
-			Operations.FileOperation fo = Operations.FileOperation.values()[ConsoleEvent.askUserForOption(
+			FileOperation fo = FileOperation.values()[ConsoleEvent.askUserForOption(
 					"Choose an operation",
-					Arrays.asList(Operations.FileOperation.toStringArray())
+					Arrays.asList(FileOperation.toStringArray())
 			) - 1];
 
-			Operations op = new Operations();
 
 			ConsoleEvent.print("Starting media queue move operation.");
 			File target;
@@ -38,18 +38,8 @@ public class CLI {
 				validDest = target.isAbsolute();
 				if (!validDest) ConsoleEvent.print("Invalid directory.", ConsoleEvent.logStatus.ERROR);
 			} while (!validDest);
-
-			switch (fo) {
-				case MOVE_FILE_ATOMICALLY:
-					op.ioStandardMoveRunner(queue, target);
-					ConsoleEvent.print("Move finalized!");
-					break;
-				case COPY_FILE_AND_DELETE_SRC:
-					op.ioNonAtomicMoveRunner(queue, target);
-					break;
-				default:
-					logger.error("Operation {} not implemented!", fo);
-			}
+			Operations op = new Operations(fo, queue, target);
+			op.executeFileOperation();
 
 		}
 
