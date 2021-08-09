@@ -69,17 +69,53 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 		return sb.toString();
 	}
 
+	@Override
+	public Iterator<MediaList> iterator() {
+		return queue.iterator();
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Media Queue (sublists = ")
+		       .append(this.queue.size())
+		       .append(", items = ")
+		       .append(this.size())
+		       .append("):")
+		       .append("\n");
+
+		for (int listIdx = 0; listIdx < queue.size(); listIdx++) {
+			MediaList mediaList = queue.get(listIdx);
+			builder.append(listIdx + 1)
+			       .append(". ")
+			       .append(mediaList.toString())
+			       .append(" (items = ")
+			       .append(mediaList.size())
+			       .append(")")
+			       .append("\n");
+
+			for (int itemIdx = 0; itemIdx < mediaList.size(); itemIdx++) {
+				var item = mediaList.getMediaList().get(itemIdx);
+				builder.append(" ")
+				       .append(listIdx + 1)
+				       .append('.')
+				       .append(itemIdx + 1)
+				       .append(". ")
+				       .append(item.getFile().getName())
+				       .append(" -> ")
+				       .append(item.getCustomFilename())
+				       .append("\n");
+			}
+		}
+		return builder.toString();
+	}
+
 	public int size() {
 		int size = 0;
 		for (MediaList l : queue) {
 			size += l.size();
 		}
 		return size;
-	}
-
-	@Override
-	public Iterator<MediaList> iterator() {
-		return queue.iterator();
 	}
 
 	public static class MediaList implements Iterable<Media> {
@@ -152,6 +188,10 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 						m.getCustomFilename()
 				);
 			}
+		}
+
+		private LinkedList<Media> getMediaList() {
+			return mediaList;
 		}
 
 		@Override
