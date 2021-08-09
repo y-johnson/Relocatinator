@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import yjohnson.PathFinder;
 
 import java.io.File;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,48 +27,61 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 	 * @param type the Media subtype to assign the file to
 	 */
 	public MediaQueue(Path src, String ext, MediaType type) {
-		if (!src.toFile().isDirectory()) {
-			if (!src.toFile().exists()) throw new IllegalArgumentException(
-					"Given source path (src = \"" + src + "\") does not exist.");
-			else if (src.toFile().isFile()) throw new IllegalArgumentException(
-					"Given source path (src = \"" + src + "\") is a file; directory expected.");
-			else throw new IllegalArgumentException(
-						"Given source path (src = \"" + src + "\") for " + this.getClass().getName() + " constructor is not valid.");
+		logger.debug("Creating new media queue.");
+		this.queue = new LinkedList<>();
+
+		if (!src.toFile().exists()) {
+			logger.error("Given source path (src = \"{}\") does not exist.", src);
+			throw new IllegalArgumentException("Given source path (src = \"" + src + "\") does not exist.");
 		}
+
 		if (!ext.startsWith(".")) {
+			logger.error("Given extension string (ext = \"{}\") for {} constructor is not valid.", ext, this.getClass().getName());
 			throw new IllegalArgumentException(
 					"Given extension string (ext = \"" + ext + "\") for " + this.getClass().getName() + " constructor is not valid.");
 		}
 
+		try {
+			if (src.toFile().isDirectory()) {
+				switch (type) {
+					case MOVIE:
+						for (File f : PathFinder.findFiles(src, ext)) {
+							MediaList list = new MediaList(f.toPath(), ext, type);
+							addMediaListToQueue(list);
+						}
+						break;
+					case TV:
+					default:
+						MediaList list = new MediaList(src, ext, type);
+						addMediaListToQueue(list);
+				}
+			}
 
-		logger.debug("Creating new media queue.");
-		this.queue = new LinkedList<>();
 
-		MediaList list = new MediaList(src, ext, type);
+		} catch (NoSuchFileException e) {
+			logger.error("Call to MediaList constructor returned a NoSuchFile exception after file was confirmed to exist in MediaQueue constructor.");
+			logger.error(e.toString());
+			e.printStackTrace();
+		}
+
+
+	}
+
+	private boolean addMediaListToQueue(MediaList list) {
 		if (!list.isEmpty()) {
 			logger.debug("Media list (name = \"{}\", size = {}) added to queue.", list.name, list.size());
-			queue.add(list);
+			this.queue.add(list);
+			return true;
 		} else {
 			logger.warn(
-					"Generated media list (\"{}\", \"{}\") is empty; it will not be added to the queue.",
+					"Media list (\"{}\", \"{}\") is empty; it will not be added to the queue.",
 					list.getDirectory(),
 					list.getExtension()
 			);
+			return false;
 		}
-
 	}
 
-	public String stringOfContents() {
-		StringBuilder sb = new StringBuilder();
-		for (MediaList m : queue) {
-			sb.append(m.toString()).append("\n");
-			for (Media item : m) {
-				sb.append(item.getFile().getName()).append("\n");
-				sb.append(" -> ").append(item.getCustomFilename()).append("\n");
-			}
-		}
-		return sb.toString();
-	}
 
 	@Override
 	public Iterator<MediaList> iterator() {
@@ -96,7 +110,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 
 			for (int itemIdx = 0; itemIdx < mediaList.size(); itemIdx++) {
 				var item = mediaList.getMediaList().get(itemIdx);
-				builder.append(" ")
+				builder.append("  ")
 				       .append(listIdx + 1)
 				       .append('.')
 				       .append(itemIdx + 1)
@@ -104,7 +118,7 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 				       .append(item.getFile().getName())
 				       .append(" -> ")
 				       .append(item.getCustomFilename())
-				       .append("\n");
+				       .append("\n\n");
 			}
 		}
 		return builder.toString();
@@ -119,50 +133,67 @@ public class MediaQueue implements Iterable<MediaQueue.MediaList> {
 	}
 
 	public static class MediaList implements Iterable<Media> {
-		//		private static final Logger logger = LoggerFactory.getLogger(MediaList.class);
 		private final Path dir;
 		private final String ext;
 		private final LinkedList<Media> mediaList;
 		private String name;
 
 		/**
-		 * Data structure to be used by MediaQueue in order to allow additional queueing with less complications. Retrieves a list of files whose
+		 * Data structure to be used by MediaQueue in order to allow additional queueing with less complications. When the given path corresponds to a
+		 * normal file, creates a MediaList object that contains only it's subsequent media object. Otherwise, retrieves a list of files whose
 		 * extension matches the given argument to process them as Media.class subtypes. It will then don the name that corresponds to the majority of
 		 * files within the list.
 		 *
-		 * @param dir  the directory to search within.
+		 * @param path the directory to search within or the file to use.
 		 * @param ext  the extension to filter by.
 		 * @param type the type to designate the media with.
+		 *
+		 * @throws NoSuchFileException when the file or directory does not exist.
 		 */
-		private MediaList(Path dir, String ext, MediaType type) {
-			logger.debug("Creating new media list, type {}; searching for files with extension {} in {}", type.name(), ext, dir);
+		private MediaList(Path path, String ext, MediaType type) throws NoSuchFileException {
 			this.mediaList = new LinkedList<>();
-			this.dir = dir;
+			this.dir = path;
 			this.ext = ext;
-			HashMap<String, Integer> listNames = new HashMap<>();
-
-			for (File f : PathFinder.findFiles(dir.toFile(), ext)) {
-				try {
-					logger.trace("Adding {} to the list as a {}.", f.getName(), type.name());
-					mediaList.add(type.instantiate(f.toPath()));
-				} catch (IllegalArgumentException e) {
-					logger.error("Passing file \"{}\" to {} instantiation method produced a \"Not a file\" error", f, type);
-					logger.error(e.toString());
-					e.printStackTrace();
+			File dirF = path.toFile();
+			if (!dirF.isDirectory()) {
+				if (dirF.isFile() && dirF.canRead()) {
+					logger.debug("Given path (path = \"{}\") corresponds to a file; setting this media list as a single-object list.", path);
+					addFileToList(type, dirF);
+					this.name = this.mediaList.getLast().getMediaTitle();
+				} else {
+					logger.error("Given path (path = \"{}\") is not recognized as a directory nor as a file.", path);
+					logger.warn("Throwing an exception due to invalid path.");
+					throw new NoSuchFileException(path.toString());
 				}
+			} else {
+				logger.debug("Creating new media list, type {}; searching for files with extension {} in {}", type.name(), ext, path);
+				HashMap<String, Integer> listNames = new HashMap<>();
+				for (File f : PathFinder.findFiles(dir, ext)) {
+					addFileToList(type, f);
 
-				Media m = this.mediaList.getLast();
-				tallyNames(listNames, m);
-			}
-
-			int freq = -1;
-			for (String key : listNames.keySet()) {
-				if (listNames.get(key) > freq) {
-					freq = listNames.get(key);
-					this.name = key;
+					Media m = this.mediaList.getLast();
+					tallyNames(listNames, m);
 				}
+				int freq = -1;
+				for (String key : listNames.keySet()) {
+					if (listNames.get(key) > freq) {
+						freq = listNames.get(key);
+						this.name = key;
+					}
+				}
+				logger.debug("List name has been set to {}. # of files with this name: {}.", this.name, freq);
 			}
-			logger.debug("List name has been set to {}. # of files with this name: {}.", this.name, freq);
+		}
+
+		private void addFileToList(MediaType type, File f) {
+			try {
+				logger.trace("Adding {} to the list as a {}.", f.getName(), type.name());
+				mediaList.add(type.instantiate(f.toPath()));
+			} catch (IllegalArgumentException e) {
+				logger.error("Passing file \"{}\" to {} instantiation method produced a \"Not a file\" error", f, type);
+				logger.error(e.toString());
+				e.printStackTrace();
+			}
 		}
 
 		/**

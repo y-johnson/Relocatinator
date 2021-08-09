@@ -1,5 +1,65 @@
 # Changelog
 
+### 8/9/2021 14:47
+
+#### Improvements to `MediaQueue` and `MediaList`
+
+* `MediaQueue` can now assign movies their own `MediaList`. * This is groundwork for possible (not guaranteed) changes,
+  such as subtitle support and multi-part movies.
+* `MediaList` can now have its constructor invoked with a general Path that leads to a file or a directory.
+	* This change is mostly to accommodate the above `MediaQueue` changes,
+	* When given a file, the list will add the unique file to itself and return, essentially making a single-object
+	  list.
+	* When given a directory, the constructor will function as it did before, searching for files within the path that
+	  meet the extension filter.
+* `MediaList` and `MediaQueue` are more verbose when logging.
+
+#### `PathFinder` now uses an improved `java.nio` implementation
+
+* Credit for major parts of this code rewrite go to [Yong Mook Kim (mkyong)](https://github.com/mkyong/) and
+  his tutorial @ [mkyon.com](https://mkyong.com/java/how-to-find-files-with-certain-extension-only/).
+
+#### Known bugs
+
+* After answering the prompt to add more files to the queue, the program registers an "Invalid directory" error before
+  allowing user input.
+  ``` java
+  Input the destination directory: 	// First request, unable to respond
+  Input the destination directory:	// Second request, able to respond
+  Invalid directory.			// This one appears as a response to the first request for a directory.
+  /* USER ENTRY HERE */			// This would respond to the second request
+  ```
+
+#### Priorities
+
+1. Semi-automated testing with JUnit.
+2. Allow for more granular user input and refine user experience.
+	1. Modifying created media files post-extraction.
+	2. Allow for users to dictate what goes together in the same folders.
+
+3. Explore possibilities of different interfaces, such as:
+	- semi-automated, headless operation
+	- GUI or terminal GUI-like operation ([lanterna](https://github.com/mabe02/lanterna))
+	- command line arguments
+	- website
+
+4. Reimplement "history" output that summarizes all operations into a text file.
+
+> ***Future:*** Add support for moving subtitles that have the same name.
+>
+> ***Future:*** Consider using other algorithms to speed up execution.
+> > Using `String.contains()` and other string methods is not very optimal, but it is done repeatedly in the program. A possible improvement would be the [Boyer–Moore string-search algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm#Implementations).
+>
+> ***Future:*** Implement *ffmpeg*'s *ffprobe* functionality to qet more reliable and abundant metadata information from
+> files.
+> > This library may be of use here: [FFmpeg Java](https://github.com/bramp/ffmpeg-cli-wrapper)
+>
+> ***Future:*** Implement online API media verification for additional metadata or corrections.
+>
+> ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
+> programmatic organization.
+>
+
 ### 7/31/2021 20:35
 
 #### Improvements to `CLI` and `Operations`
@@ -53,7 +113,8 @@
 >
 > ***Future:*** Make the program semi-automated with the usage of command line arguments to allow for scheduled or
 > programmatic organization.
-> 
+>
+
 ### 7/16/2021 15:39
 
 #### Improvements to `Movie`
